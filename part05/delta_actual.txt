@@ -1,0 +1,8 @@
+step 1: insert both directions
++ mutual('alice', 'bob') (diff=1)
++ mutual('bob', 'alice') (diff=1)
+step 2: insert one direction
+no change
+step 3: remove reverse direction
+- mutual('alice', 'bob') (diff=-1)
+- mutual('bob', 'alice') (diff=-1)

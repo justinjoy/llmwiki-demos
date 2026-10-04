@@ -1,0 +1,8 @@
+8교시 실습 B: wiki/analysis/ledger-impact-S1b.md에 저장할 Markdown 본문만 작성하라.
+제목은 ledger 지연 영향 검토, 기준은 S1b, 규칙은 candidate-v1, 상태는 검토 대기이다.
+제공된 final_answer.md, claim_review.csv, evidence_bundle.json과 S1b_result.json의 검증 가능한 내용을 정리하라.
+후보별 사실 ID 경로, notify 알림 지연의 의미, 186/4,900건·25분·42분의 의미, OPS-04의 조건·범위·실행 승인, 현재 미확인을 포함하라.
+근거 링크는 ../../raw/파일명.md, 서비스 링크는 ../services/order.md와 ../services/pay.md, 탐색 입구는 ../index.md이다.
+검토자·일자는 '사람 검토 후 기록'으로 표시하고 실제 승인 이력을 만들지 말라. LLM 제안은 제안으로 표시하라.
+이 페이지는 S1b의 분석 기록이며 현재 운영의 실제 장애 확정이나 설계 변경 배포를 주장하지 않는다.
+호출 경로만으로 실제 지연을 확정하지 말고 '지연될 수 있다'로 표현하라. 알림의 격리 조건은 알림 오류로 주문 변경·결제 취소를 하지 않는다는 의미로 한정하라.

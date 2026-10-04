@@ -1,0 +1,5 @@
+{
+  "status": "expected_error",
+  "kind": "arity",
+  "message": "PyreWire ParseError: parse error"
+}

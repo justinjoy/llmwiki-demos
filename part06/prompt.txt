@@ -1,0 +1,12 @@
+6교시 실습 A: input.json의 S1 구조 질의 결과와 제공 원문을 사용해 evidence_bundle.json에 저장할 JSON 객체만 출력하라.
+최상위 키: snapshot_id, candidates, initial_doc_ids, expanded_doc_ids, expansion_reason, items, gaps, mode.
+snapshot_id는 S1, candidates는 shop/order/pay 세 ID, initial_doc_ids는 ARCH-01:v1, ADR-07:v1, INC-03:v1이다.
+expanded_doc_ids는 ["OPS-04:v1"]이다. ADR-07 v1 §3의 참조를 따라 추가한 문서이며 초기 about 결과였다고 쓰지 말라.
+items는 근거 항목 배열이다. 각 항목의 필드는 service, source_id, version, section, quote, evidence_kind, explanation, interpretation이다.
+service는 shop/order/pay 중 관련 서비스 ID 하나다. source_id는 ARCH-01 같은 문서 번호만, version은 v1, section은 §1 형식이다.
+quote는 지정한 절에 실제 존재하는 연속 문자열을 그대로 복사하라. 축약·생략 부호·문장 합성을 하지 말라.
+items에 ADR-07 §1의 설계 결정, ADR-07 §2의 설계 이유, INC-03 §1의 186/4,900건 관측, INC-03 §3의 25분과 42분, OPS-04 §1의 진입 조건과 건별 승인, OPS-04 §2의 조치 범위를 각각 포함하라.
+explanation에 설명, interpretation에는 원문 사실을 넘어서는 해석이 있을 때만 그 해석을 쓰고 없으면 null을 쓴다.
+shop은 초기 about 문서가 없어도 candidates에서 제거하지 말라. 구조적 후보와 실제 장애 확정을 구분하라.
+정책 문서 승인과 현재 사고의 실행 승인은 별개다. 현재 지표·불일치·영향 가맹점·승인 기록·향후 복구 시각은 gaps에 미확인으로 남겨라.
+mode는 "LLM 생성 초안; 원문 인용 자동 검사 후 사람 검토 필요"라고 쓰라. 사람 검토자나 실제 승인 이력을 만들지 말라.

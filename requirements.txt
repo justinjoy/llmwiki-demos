@@ -1,0 +1,2 @@
+# CPython 3.11–3.14; released package, not a local editable checkout.
+pyrewire==1.1.2

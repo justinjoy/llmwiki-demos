@@ -1,0 +1,62 @@
+[
+  {
+    "id": "E01",
+    "revision": 1,
+    "content_sha256": "d5716a8c0b18ee274dff7e53098fc1dedbdf06c03ebabe47e0a654767c1d14f8",
+    "candidate": {
+      "claim": "ledger depends_on pay",
+      "id": "E01"
+    },
+    "review_status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "reason": "ARCH-01 v1 §2: 호출 방향은 pay → ledger이다."
+  },
+  {
+    "id": "E02",
+    "revision": 1,
+    "content_sha256": "69c1d9e972be1d29d462a58c6ecd6eeb2d0ce11172906cdb10bd690d14658ebb",
+    "candidate": {
+      "claim": "pay 담당 팀 Platform",
+      "id": "E02"
+    },
+    "review_status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "reason": "ARCH-01 v1 §3: pay 운영 팀은 결제정산팀이다. entities.json에서 올바른 팀을 보존한다."
+  },
+  {
+    "id": "E03",
+    "revision": 1,
+    "content_sha256": "5e63fbaf4899f7b02eba5694c5e6a71ff3565a603a27104275e239291b55f4f6",
+    "candidate": {
+      "claim": "shop depends_on ledger 직접 호출",
+      "id": "E03"
+    },
+    "review_status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "reason": "ARCH-01 v1 §1·§2: shop → ledger는 간접 경로이며 직접 입력에서 제외한다."
+  },
+  {
+    "id": "E05",
+    "revision": 1,
+    "content_sha256": "d9b7f5cd76dd0234bbf610514945ab760bbff6934831231b9e1daaeaf887be8e",
+    "candidate": {
+      "claim": "ledger-db = ledger Service",
+      "id": "E05"
+    },
+    "review_status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "reason": "GLOSS-01 v1 §1: ledger-db는 DataStore로 분리한다."
+  },
+  {
+    "id": "E06",
+    "revision": 1,
+    "content_sha256": "366876ae77ee9a2a6e6998fe545f7ada80f5da455c091275f9336fcb1e87709a",
+    "candidate": {
+      "claim": "payment와 pay 별도 서비스",
+      "id": "E06"
+    },
+    "review_status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "reason": "GLOSS-01 v1 §1: payment를 pay 별칭으로 정규화한다."
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "python": "3.14.7",
+  "interpreter": "/opt/homebrew/opt/python@3.14/bin/python3.14",
+  "package": "pyrewire",
+  "version": "1.1.2",
+  "module": "/opt/homebrew/lib/python3.14/site-packages/pyrewire/__init__.py",
+  "editable": false,
+  "previous_installation": "0.1.0 editable removed",
+  "source": "https://pypi.org/project/pyrewire/1.1.2/"
+}

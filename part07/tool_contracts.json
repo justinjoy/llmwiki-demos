@@ -1,0 +1,52 @@
+{
+  "notice": "교육용 애플리케이션 계약. Wirelog 내장 API 아님. tools/collaborate.py는 이 순서를 수동 계획으로 실행하는 도우미.",
+  "statuses": [
+    "success",
+    "empty",
+    "error"
+  ],
+  "tools": {
+    "find_candidates": {
+      "inputs": [
+        "target",
+        "snapshot_id"
+      ],
+      "outputs": [
+        "services",
+        "rule_id",
+        "snapshot_id"
+      ]
+    },
+    "find_documents": {
+      "inputs": [
+        "service_ids",
+        "snapshot_id"
+      ],
+      "outputs": [
+        "doc_ids"
+      ]
+    },
+    "search_context": {
+      "inputs": [
+        "doc_ids",
+        "question"
+      ],
+      "outputs": [
+        "passages",
+        "document_status"
+      ]
+    },
+    "trace_path": {
+      "inputs": [
+        "service",
+        "target",
+        "snapshot_id"
+      ],
+      "outputs": [
+        "assertion_ids"
+      ]
+    }
+  },
+  "budget": 6,
+  "approval": "읽기 도구에는 사실 쓰기와 승인 권한 없음"
+}

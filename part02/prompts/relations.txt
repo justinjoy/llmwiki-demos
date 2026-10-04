@@ -1,0 +1,14 @@
+제공된 타입 사전과 원문을 사용하여 관계 사전을 작성하라. 타입 사전 자체는 원문 사실의 근거가 아니다.
+relations.csv에 저장할 CSV 본문만 반환하라.
+헤더는 정확히 다음과 같다: 관계,출발 타입,도착 타입,정의,포함,제외
+관계 5개를 정의하라: depends_on, calls_api, api_of, owned_by, about.
+출발·도착 타입은 제공된 types.csv에 정의한 타입 이름을 사용하라.
+depends_on은 Service→Service인 내부 서비스 간 직접 HTTP 호출로 한정한다.
+간접 호출 경로, PG 같은 외부 시스템, DB 접속, 동시 언급을 depends_on의 직접 사실로 넣지 말라.
+calls_api는 Service→API, api_of는 API→Service로 정의해 API의 제공 서비스를 표현하라.
+calls_api와 api_of를 결합하면 직접 서비스 호출을 찾을 수 있음을 정의에 설명하라.
+owned_by는 Service→Team의 운영 책임, about은 Document→Service의 설명 관계로 정의하라.
+포함 필드에는 원문이 뒷받침하는 예와 문서 버전·절을 적어라.
+제외 필드에는 반대 방향의 자동 추정, 개인 당직자 추정, 문자열 유사성처럼 해당 관계가 허용하지 않는 예를 적어라.
+규칙으로 유도한 결과와 원문에서 읽은 사실의 차이를 유지하라.
+쉼표나 줄바꿈을 포함하는 필드는 CSV 규칙에 따라 큰따옴표로 감싸라.

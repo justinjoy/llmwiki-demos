@@ -1,0 +1,19 @@
+{
+  "S1": [
+    "order",
+    "pay",
+    "shop"
+  ],
+  "S1b": [
+    "notify",
+    "order",
+    "pay",
+    "shop"
+  ],
+  "notify_path": [
+    "F04",
+    "F02",
+    "F03"
+  ],
+  "input_kind": "최종 슬라이드 교육자료의 승인 예시 체크포인트; 학습자 자동 승인 아님"
+}

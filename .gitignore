@@ -1,0 +1,46 @@
+# 로컬 의존성 (setup으로 재설치)
+.deps/
+
+# 실행 기록: LLM 입력·응답·엔진 결과·이전 파일 백업 (실행할 때 생성)
+runs/
+
+# 3교시 검토 백업 (기준 DB인 .review/state.sqlite3는 승인 메타데이터 검증에 필요하므로 추적)
+**/.review/backups/
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# 가상환경·비밀값
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# 편집기
+.vscode/
+.idea/
+*.swp
+*~
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

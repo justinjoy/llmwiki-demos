@@ -1,0 +1,72 @@
+{
+  "services": [
+    {
+      "id": "shop",
+      "type": "Service",
+      "owner_team": "커머스플랫폼팀",
+      "source": "ARCH-01:v1 §3"
+    },
+    {
+      "id": "order",
+      "type": "Service",
+      "owner_team": "커머스플랫폼팀",
+      "source": "ARCH-01:v1 §3"
+    },
+    {
+      "id": "pay",
+      "type": "Service",
+      "owner_team": "결제정산팀",
+      "source": "ARCH-01:v1 §3"
+    },
+    {
+      "id": "ledger",
+      "type": "Service",
+      "owner_team": "결제정산팀",
+      "source": "ARCH-01:v1 §3"
+    }
+  ],
+  "apis": [
+    {
+      "id": "api:order:POST:/v1/orders",
+      "type": "API",
+      "owner_service": "order",
+      "method": "POST",
+      "path": "/v1/orders",
+      "caller": "shop",
+      "timeout_seconds": 5,
+      "source": "ARCH-01:v1 §1·§2"
+    },
+    {
+      "id": "api:pay:POST:/v1/payments/authorize",
+      "type": "API",
+      "owner_service": "pay",
+      "method": "POST",
+      "path": "/v1/payments/authorize",
+      "caller": "order",
+      "timeout_seconds": 3,
+      "source": "ARCH-01:v1 §1·§2"
+    },
+    {
+      "id": "api:ledger:POST:/v1/journal-entries",
+      "type": "API",
+      "owner_service": "ledger",
+      "method": "POST",
+      "path": "/v1/journal-entries",
+      "caller": "pay",
+      "timeout_seconds": 1.8,
+      "source": "ARCH-01:v1 §2"
+    }
+  ],
+  "excluded_from_service_graph": [
+    {
+      "id": "ledger-db",
+      "type": "DataStore",
+      "reason": "GLOSS-01 v1 §1에서 Service와 구분"
+    },
+    {
+      "id": "ledger-batch",
+      "type": "BatchJob",
+      "reason": "동일 접두사로 서비스 병합하지 않음"
+    }
+  ]
+}

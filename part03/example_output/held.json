@@ -1,0 +1,14 @@
+[
+  {
+    "id": "E04",
+    "revision": 1,
+    "content_sha256": "484818d6e0352092629cc259e44f5a15b44c22b606724fb0fbaf4b67df876fec",
+    "candidate": {
+      "claim": "pay 원장 호출 제거 완료",
+      "id": "E04"
+    },
+    "review_status": "held",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "reason": "ARCH-01 v2 §1·§2: 운영 미반영 검토안으로 배포·승인 확인 전 보류한다."
+  }
+]

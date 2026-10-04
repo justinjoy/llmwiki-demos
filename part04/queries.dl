@@ -1,0 +1,4 @@
+.decl order_doc(doc: symbol)
+.decl shop_dep(dst: symbol)
+order_doc(D) :- about(D, "order").
+shop_dep(Y) :- depends_on("shop", Y).

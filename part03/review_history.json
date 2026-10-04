@@ -1,0 +1,449 @@
+[
+  {
+    "id": "E01",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "ledger depends_on pay",
+      "id": "E01"
+    },
+    "content_sha": "d5716a8c0b18ee274dff7e53098fc1dedbdf06c03ebabe47e0a654767c1d14f8",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557480+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "claim": {
+        "before": null,
+        "after": "ledger depends_on pay"
+      },
+      "id": {
+        "before": null,
+        "after": "E01"
+      }
+    }
+  },
+  {
+    "id": "E02",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "pay 담당 팀 Platform",
+      "id": "E02"
+    },
+    "content_sha": "69c1d9e972be1d29d462a58c6ecd6eeb2d0ce11172906cdb10bd690d14658ebb",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557489+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "claim": {
+        "before": null,
+        "after": "pay 담당 팀 Platform"
+      },
+      "id": {
+        "before": null,
+        "after": "E02"
+      }
+    }
+  },
+  {
+    "id": "E03",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "shop depends_on ledger 직접 호출",
+      "id": "E03"
+    },
+    "content_sha": "5e63fbaf4899f7b02eba5694c5e6a71ff3565a603a27104275e239291b55f4f6",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557497+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "claim": {
+        "before": null,
+        "after": "shop depends_on ledger 직접 호출"
+      },
+      "id": {
+        "before": null,
+        "after": "E03"
+      }
+    }
+  },
+  {
+    "id": "E04",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "pay 원장 호출 제거 완료",
+      "id": "E04"
+    },
+    "content_sha": "484818d6e0352092629cc259e44f5a15b44c22b606724fb0fbaf4b67df876fec",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557506+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "claim": {
+        "before": null,
+        "after": "pay 원장 호출 제거 완료"
+      },
+      "id": {
+        "before": null,
+        "after": "E04"
+      }
+    }
+  },
+  {
+    "id": "E05",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "ledger-db = ledger Service",
+      "id": "E05"
+    },
+    "content_sha": "d9b7f5cd76dd0234bbf610514945ab760bbff6934831231b9e1daaeaf887be8e",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557513+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "claim": {
+        "before": null,
+        "after": "ledger-db = ledger Service"
+      },
+      "id": {
+        "before": null,
+        "after": "E05"
+      }
+    }
+  },
+  {
+    "id": "E06",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "payment와 pay 별도 서비스",
+      "id": "E06"
+    },
+    "content_sha": "366876ae77ee9a2a6e6998fe545f7ada80f5da455c091275f9336fcb1e87709a",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557521+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "claim": {
+        "before": null,
+        "after": "payment와 pay 별도 서비스"
+      },
+      "id": {
+        "before": null,
+        "after": "E06"
+      }
+    }
+  },
+  {
+    "id": "F01",
+    "revision": 1,
+    "kind": "assertion",
+    "payload": {
+      "assertion_id": "F01",
+      "document_status": "approved",
+      "object": "order",
+      "object_type": "Service",
+      "predicate": "depends_on",
+      "quote": "쇼핑몰 서버(shop)는 주문서가 접수되면 주문 서비스(order)의 POST /v1/orders를 호출한다.",
+      "review_status": "pending",
+      "reviewer": "",
+      "scope": "직영몰 카드 선결제, 내부 직접 HTTP 호출",
+      "section": "§1",
+      "snapshot_id": "S1",
+      "source_id": "ARCH-01",
+      "subject": "shop",
+      "subject_type": "Service",
+      "version": "v1"
+    },
+    "content_sha": "2fd1e25ab33cf9c02b477274ef085394c71e9fac2cd840e53007ec6d6a83ea0a",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557267+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "reviewer": {
+        "before": null,
+        "after": ""
+      },
+      "source_id": {
+        "before": null,
+        "after": "ARCH-01"
+      },
+      "document_status": {
+        "before": null,
+        "after": "approved"
+      },
+      "subject": {
+        "before": null,
+        "after": "shop"
+      },
+      "object_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "assertion_id": {
+        "before": null,
+        "after": "F01"
+      },
+      "scope": {
+        "before": null,
+        "after": "직영몰 카드 선결제, 내부 직접 HTTP 호출"
+      },
+      "version": {
+        "before": null,
+        "after": "v1"
+      },
+      "object": {
+        "before": null,
+        "after": "order"
+      },
+      "quote": {
+        "before": null,
+        "after": "쇼핑몰 서버(shop)는 주문서가 접수되면 주문 서비스(order)의 POST /v1/orders를 호출한다."
+      },
+      "predicate": {
+        "before": null,
+        "after": "depends_on"
+      },
+      "review_status": {
+        "before": null,
+        "after": "pending"
+      },
+      "subject_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "section": {
+        "before": null,
+        "after": "§1"
+      },
+      "snapshot_id": {
+        "before": null,
+        "after": "S1"
+      }
+    }
+  },
+  {
+    "id": "F02",
+    "revision": 1,
+    "kind": "assertion",
+    "payload": {
+      "assertion_id": "F02",
+      "document_status": "approved",
+      "object": "pay",
+      "object_type": "Service",
+      "predicate": "depends_on",
+      "quote": "주문 서비스(order)는 재고 예약과 견적 유효기간을 확인한 뒤 결제 서비스(pay)의 POST /v1/payments/authorize를 호출한다.",
+      "review_status": "pending",
+      "reviewer": "",
+      "scope": "직영몰 카드 선결제, 내부 직접 HTTP 호출",
+      "section": "§1",
+      "snapshot_id": "S1",
+      "source_id": "ARCH-01",
+      "subject": "order",
+      "subject_type": "Service",
+      "version": "v1"
+    },
+    "content_sha": "bb5ec3ce3695ae9214767fae6c2c0fa9ca35ea4b7b0aa45c2aa3c870be9f4b1c",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557452+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "reviewer": {
+        "before": null,
+        "after": ""
+      },
+      "source_id": {
+        "before": null,
+        "after": "ARCH-01"
+      },
+      "document_status": {
+        "before": null,
+        "after": "approved"
+      },
+      "subject": {
+        "before": null,
+        "after": "order"
+      },
+      "object_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "assertion_id": {
+        "before": null,
+        "after": "F02"
+      },
+      "scope": {
+        "before": null,
+        "after": "직영몰 카드 선결제, 내부 직접 HTTP 호출"
+      },
+      "version": {
+        "before": null,
+        "after": "v1"
+      },
+      "object": {
+        "before": null,
+        "after": "pay"
+      },
+      "quote": {
+        "before": null,
+        "after": "주문 서비스(order)는 재고 예약과 견적 유효기간을 확인한 뒤 결제 서비스(pay)의 POST /v1/payments/authorize를 호출한다."
+      },
+      "predicate": {
+        "before": null,
+        "after": "depends_on"
+      },
+      "review_status": {
+        "before": null,
+        "after": "pending"
+      },
+      "subject_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "section": {
+        "before": null,
+        "after": "§1"
+      },
+      "snapshot_id": {
+        "before": null,
+        "after": "S1"
+      }
+    }
+  },
+  {
+    "id": "F03",
+    "revision": 1,
+    "kind": "assertion",
+    "payload": {
+      "assertion_id": "F03",
+      "document_status": "approved",
+      "object": "ledger",
+      "object_type": "Service",
+      "predicate": "depends_on",
+      "quote": "결제 서비스(pay)는 PG사의 승인 응답을 받은 뒤 원장 서비스(ledger)의 POST /v1/journal-entries를 동기로 호출한다.",
+      "review_status": "pending",
+      "reviewer": "",
+      "scope": "직영몰 카드 선결제, 내부 직접 HTTP 호출",
+      "section": "§2",
+      "snapshot_id": "S1",
+      "source_id": "ARCH-01",
+      "subject": "pay",
+      "subject_type": "Service",
+      "version": "v1"
+    },
+    "content_sha": "b680e909cb3ed27fa7b1ce233250c6dca07d236a66f9db3e60f5c5a0f29a8991",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.557470+00:00",
+    "status": null,
+    "reviewer": null,
+    "review_reason": null,
+    "reviewed_at": null,
+    "changes": {
+      "reviewer": {
+        "before": null,
+        "after": ""
+      },
+      "source_id": {
+        "before": null,
+        "after": "ARCH-01"
+      },
+      "document_status": {
+        "before": null,
+        "after": "approved"
+      },
+      "subject": {
+        "before": null,
+        "after": "pay"
+      },
+      "object_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "assertion_id": {
+        "before": null,
+        "after": "F03"
+      },
+      "scope": {
+        "before": null,
+        "after": "직영몰 카드 선결제, 내부 직접 HTTP 호출"
+      },
+      "version": {
+        "before": null,
+        "after": "v1"
+      },
+      "object": {
+        "before": null,
+        "after": "ledger"
+      },
+      "quote": {
+        "before": null,
+        "after": "결제 서비스(pay)는 PG사의 승인 응답을 받은 뒤 원장 서비스(ledger)의 POST /v1/journal-entries를 동기로 호출한다."
+      },
+      "predicate": {
+        "before": null,
+        "after": "depends_on"
+      },
+      "review_status": {
+        "before": null,
+        "after": "pending"
+      },
+      "subject_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "section": {
+        "before": null,
+        "after": "§2"
+      },
+      "snapshot_id": {
+        "before": null,
+        "after": "S1"
+      }
+    }
+  }
+]

@@ -1,0 +1,10 @@
+id,revision,content_sha256,판정,근거 또는 이유,검토자
+E01,1,d5716a8c0b18ee274dff7e53098fc1dedbdf06c03ebabe47e0a654767c1d14f8,rejected,ARCH-01 v1 §2: 호출 방향은 pay → ledger이다.,교육용 판정 예시(실제 검토 아님)
+E02,1,69c1d9e972be1d29d462a58c6ecd6eeb2d0ce11172906cdb10bd690d14658ebb,rejected,ARCH-01 v1 §3: pay 운영 팀은 결제정산팀이다. entities.json에서 올바른 팀을 보존한다.,교육용 판정 예시(실제 검토 아님)
+E03,1,5e63fbaf4899f7b02eba5694c5e6a71ff3565a603a27104275e239291b55f4f6,rejected,ARCH-01 v1 §1·§2: shop → ledger는 간접 경로이며 직접 입력에서 제외한다.,교육용 판정 예시(실제 검토 아님)
+E04,1,484818d6e0352092629cc259e44f5a15b44c22b606724fb0fbaf4b67df876fec,held,ARCH-01 v2 §1·§2: 운영 미반영 검토안으로 배포·승인 확인 전 보류한다.,교육용 판정 예시(실제 검토 아님)
+E05,1,d9b7f5cd76dd0234bbf610514945ab760bbff6934831231b9e1daaeaf887be8e,rejected,GLOSS-01 v1 §1: ledger-db는 DataStore로 분리한다.,교육용 판정 예시(실제 검토 아님)
+E06,1,366876ae77ee9a2a6e6998fe545f7ada80f5da455c091275f9336fcb1e87709a,rejected,GLOSS-01 v1 §1: payment를 pay 별칭으로 정규화한다.,교육용 판정 예시(실제 검토 아님)
+F01,1,2fd1e25ab33cf9c02b477274ef085394c71e9fac2cd840e53007ec6d6a83ea0a,approved,ARCH-01 v1 §1: shop이 order 주문 API를 직접 호출한다.,교육용 판정 예시(실제 검토 아님)
+F02,1,bb5ec3ce3695ae9214767fae6c2c0fa9ca35ea4b7b0aa45c2aa3c870be9f4b1c,approved,ARCH-01 v1 §1: order가 pay 승인 API를 직접 호출한다.,교육용 판정 예시(실제 검토 아님)
+F03,1,b680e909cb3ed27fa7b1ce233250c6dca07d236a66f9db3e60f5c5a0f29a8991,approved,ARCH-01 v1 §2: pay가 ledger 쓰기 API를 직접 호출한다.,교육용 판정 예시(실제 검토 아님)

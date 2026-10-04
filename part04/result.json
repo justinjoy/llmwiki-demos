@@ -1,0 +1,36 @@
+{
+  "status": "success",
+  "engine": "pyrewire",
+  "engine_version": "1.1.2",
+  "api": "EasySession.snapshot",
+  "relations": {
+    "direct": [
+      [
+        "order",
+        "pay"
+      ],
+      [
+        "pay",
+        "ledger"
+      ],
+      [
+        "shop",
+        "order"
+      ]
+    ],
+    "pay_doc": [
+      [
+        "ARCH-01:v1"
+      ],
+      [
+        "INC-03:v1"
+      ]
+    ]
+  },
+  "snapshot_id": "S1",
+  "snapshot_kind": "reference",
+  "rule_id": "candidate-v1",
+  "input_kind": "최종 교육자료의 승인 예시 체크포인트",
+  "source_sha256": "3a1379b3872c96d820c18f8f7ad5ea4845e1230d32faba43ea99aa902e1671e3",
+  "paths": []
+}

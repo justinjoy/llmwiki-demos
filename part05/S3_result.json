@@ -1,0 +1,97 @@
+{
+  "status": "success",
+  "engine": "pyrewire",
+  "engine_version": "1.1.2",
+  "api": "EasySession.snapshot",
+  "relations": {
+    "direct": [
+      [
+        "order",
+        "ledger"
+      ],
+      [
+        "order",
+        "pay"
+      ],
+      [
+        "shop",
+        "order"
+      ]
+    ],
+    "pay_doc": [
+      [
+        "ARCH-01:v1"
+      ],
+      [
+        "INC-03:v1"
+      ]
+    ],
+    "reach": [
+      [
+        "order",
+        "ledger"
+      ],
+      [
+        "order",
+        "pay"
+      ],
+      [
+        "shop",
+        "ledger"
+      ],
+      [
+        "shop",
+        "order"
+      ],
+      [
+        "shop",
+        "pay"
+      ]
+    ],
+    "candidate": [
+      [
+        "order"
+      ],
+      [
+        "shop"
+      ]
+    ],
+    "candidate_doc": [
+      [
+        "order",
+        "ADR-07:v1"
+      ]
+    ]
+  },
+  "snapshot_id": "S3",
+  "snapshot_kind": "scenario",
+  "rule_id": "candidate-v1",
+  "input_kind": "최종 교육자료의 승인 예시 체크포인트",
+  "source_sha256": "d5bb2baa8b438065f97a0b2fd554fd229ebbbeaac316b164461d7c2139dc8d96",
+  "paths": [
+    {
+      "service": "order",
+      "target": "ledger",
+      "assertion_ids": [
+        "EXP01"
+      ],
+      "services": [
+        "order",
+        "ledger"
+      ]
+    },
+    {
+      "service": "shop",
+      "target": "ledger",
+      "assertion_ids": [
+        "F01",
+        "EXP01"
+      ],
+      "services": [
+        "shop",
+        "order",
+        "ledger"
+      ]
+    }
+  ]
+}

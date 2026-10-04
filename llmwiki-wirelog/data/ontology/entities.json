@@ -1,0 +1,101 @@
+{
+  "services": [
+    {
+      "id": "shop",
+      "type": "Service",
+      "owner_team": "커머스플랫폼팀",
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§3",
+      "quote": "쇼핑몰 서버와 주문 서비스는 커머스플랫폼팀, 결제 서비스와 원장 서비스는 결제정산팀에서 운영한다."
+    },
+    {
+      "id": "order",
+      "type": "Service",
+      "owner_team": "커머스플랫폼팀",
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§3",
+      "quote": "쇼핑몰 서버와 주문 서비스는 커머스플랫폼팀, 결제 서비스와 원장 서비스는 결제정산팀에서 운영한다."
+    },
+    {
+      "id": "pay",
+      "type": "Service",
+      "owner_team": "결제정산팀",
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§3",
+      "quote": "쇼핑몰 서버와 주문 서비스는 커머스플랫폼팀, 결제 서비스와 원장 서비스는 결제정산팀에서 운영한다."
+    },
+    {
+      "id": "ledger",
+      "type": "Service",
+      "owner_team": "결제정산팀",
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§3",
+      "quote": "쇼핑몰 서버와 주문 서비스는 커머스플랫폼팀, 결제 서비스와 원장 서비스는 결제정산팀에서 운영한다."
+    }
+  ],
+  "apis": [
+    {
+      "id": "api:order:POST:/v1/orders",
+      "type": "API",
+      "owner_service": "order",
+      "method": "POST",
+      "path": "/v1/orders",
+      "caller": "shop",
+      "timeout_seconds": 5,
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§2",
+      "quote": "| 쇼핑몰 → 주문 | POST /v1/orders | 5초 | 기존 주문 번호로 상태 조회 |"
+    },
+    {
+      "id": "api:pay:POST:/v1/payments/authorize",
+      "type": "API",
+      "owner_service": "pay",
+      "method": "POST",
+      "path": "/v1/payments/authorize",
+      "caller": "order",
+      "timeout_seconds": 3,
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§2",
+      "quote": "| 주문 → 결제 | POST /v1/payments/authorize | 3초 | 결제 확인 중(PAYMENT_PENDING)으로 유지 |"
+    },
+    {
+      "id": "api:ledger:POST:/v1/journal-entries",
+      "type": "API",
+      "owner_service": "ledger",
+      "method": "POST",
+      "path": "/v1/journal-entries",
+      "caller": "pay",
+      "timeout_seconds": 1.8,
+      "source_id": "ARCH-01",
+      "version": "v1",
+      "section": "§2",
+      "quote": "| 결제 → 원장 | POST /v1/journal-entries | 1.8초 | 원장 반영 대기(LEDGER_PENDING)로 저장 후 대사 큐에 등록 |"
+    }
+  ],
+  "excluded_from_service_graph": [
+    {
+      "id": "ledger-db",
+      "type": "DataStore",
+      "reason": "ledger가 사용하는 DB",
+      "source_id": "GLOSS-01",
+      "version": "v1",
+      "section": "§1",
+      "quote": "| ledger-db | 원장 데이터베이스 | ledger가 사용하는 DB |"
+    },
+    {
+      "id": "ledger-batch",
+      "type": "BatchJob",
+      "reason": "결산용 집계 등 정기 작업",
+      "source_id": "GLOSS-01",
+      "version": "v1",
+      "section": "§1",
+      "quote": "| ledger-batch | 원장 배치 작업 | 결산용 집계 등 정기 작업 |"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+.decl depends_on(src: symbol, dst: symbol)
+.decl about(doc: symbol, svc: symbol)
+.decl direct(src: symbol, dst: symbol)
+.decl pay_doc(doc: symbol)
+
+direct(X, Y) :- depends_on(X, Y).
+pay_doc(D) :- about(D, "pay").
+
+depends_on("shop", "order").
+depends_on("order", "pay").
+depends_on("pay", "ledger").
+about("ARCH-01:v1", "pay").
+about("INC-03:v1", "pay").
+about("ADR-07:v1", "order").

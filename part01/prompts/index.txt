@@ -1,0 +1,6 @@
+제공한 위키 페이지를 안내하는 wiki/index.md를 작성하라.
+order, pay, INC-03 각각의 설명 1줄과 링크를 넣어라.
+링크는 services/order.md, services/pay.md, incidents/INC-03.md이다.
+원문 3개는 ../raw/파일명.md로 연결하라.
+위키가 원문을 주제별로 정리한 초안이며 사람이 출처를 검토해야 함을 표시하라.
+없는 페이지를 만들거나 사실을 추가하지 말라. Markdown 본문만 반환하라.

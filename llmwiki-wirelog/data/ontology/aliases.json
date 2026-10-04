@@ -1,0 +1,50 @@
+[
+  {
+    "alias": "payment",
+    "canonical_id": "pay",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "결제 서비스의 공식 ID는 pay이며, 기존 문서의 payment도 같은 서비스를 가리킨다."
+  },
+  {
+    "alias": "결제 서비스",
+    "canonical_id": "pay",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "결제 서비스의 공식 ID는 pay이며, 기존 문서의 payment도 같은 서비스를 가리킨다."
+  },
+  {
+    "alias": "쇼핑몰 화면용 서버(BFF)",
+    "canonical_id": "shop",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "| shop | 쇼핑몰 화면용 서버(BFF) | 주문 접수 및 처리 상태 조회 |"
+  },
+  {
+    "alias": "주문 서비스",
+    "canonical_id": "order",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "| order | 주문 서비스 | 주문 생성·상태 관리 |"
+  },
+  {
+    "alias": "원장 서비스",
+    "canonical_id": "ledger",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "| ledger | 원장 서비스 | 결제 내역 저장·조회 API |"
+  },
+  {
+    "alias": "알림 워커",
+    "canonical_id": "notify",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "| notify | 알림 워커 | 주문 완료 알림 발송 |"
+  }
+]

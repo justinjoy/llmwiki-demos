@@ -1,0 +1,9 @@
+제공된 GLOSS-01 v1 원문에서 명시적 별칭을 추출하라.
+aliases.json에 저장할 JSON 배열만 반환하라.
+각 항목은 alias, canonical_id, source_id, version, section, quote 필드를 가진다.
+source_id에는 버전을 붙이지 말라. 예: "source_id":"GLOSS-01", "version":"v1". section은 "§1" 형식이다.
+quote는 지정한 원문 절에 존재하는 연속 문자열을 그대로 사용하라.
+원문 표현(alias)을 보존하면서 표준 서비스 ID(canonical_id)에 연결하라.
+배포 리소스 이름, DataStore, BatchJob, API 경로를 서비스의 별칭으로 임의 통합하지 말라.
+이름의 접두사가 같다는 이유로 같은 개체로 만들지 말라.
+미확인 별칭은 확정 레코드에 넣지 말라. 사람이 검토할 추출 초안만 작성한다.

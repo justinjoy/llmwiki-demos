@@ -1,0 +1,449 @@
+[
+  {
+    "id": "E01",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "ledger depends_on pay",
+      "id": "E01"
+    },
+    "content_sha": "d5716a8c0b18ee274dff7e53098fc1dedbdf06c03ebabe47e0a654767c1d14f8",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614207+00:00",
+    "status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v1 §2: 호출 방향은 pay → ledger이다.",
+    "reviewed_at": "2026-10-03T14:27:43.621672+00:00",
+    "changes": {
+      "id": {
+        "before": null,
+        "after": "E01"
+      },
+      "claim": {
+        "before": null,
+        "after": "ledger depends_on pay"
+      }
+    }
+  },
+  {
+    "id": "E02",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "pay 담당 팀 Platform",
+      "id": "E02"
+    },
+    "content_sha": "69c1d9e972be1d29d462a58c6ecd6eeb2d0ce11172906cdb10bd690d14658ebb",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614216+00:00",
+    "status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v1 §3: pay 운영 팀은 결제정산팀이다. entities.json에서 올바른 팀을 보존한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621675+00:00",
+    "changes": {
+      "id": {
+        "before": null,
+        "after": "E02"
+      },
+      "claim": {
+        "before": null,
+        "after": "pay 담당 팀 Platform"
+      }
+    }
+  },
+  {
+    "id": "E03",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "shop depends_on ledger 직접 호출",
+      "id": "E03"
+    },
+    "content_sha": "5e63fbaf4899f7b02eba5694c5e6a71ff3565a603a27104275e239291b55f4f6",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614225+00:00",
+    "status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v1 §1·§2: shop → ledger는 간접 경로이며 직접 입력에서 제외한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621677+00:00",
+    "changes": {
+      "id": {
+        "before": null,
+        "after": "E03"
+      },
+      "claim": {
+        "before": null,
+        "after": "shop depends_on ledger 직접 호출"
+      }
+    }
+  },
+  {
+    "id": "E04",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "pay 원장 호출 제거 완료",
+      "id": "E04"
+    },
+    "content_sha": "484818d6e0352092629cc259e44f5a15b44c22b606724fb0fbaf4b67df876fec",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614234+00:00",
+    "status": "held",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v2 §1·§2: 운영 미반영 검토안으로 배포·승인 확인 전 보류한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621679+00:00",
+    "changes": {
+      "id": {
+        "before": null,
+        "after": "E04"
+      },
+      "claim": {
+        "before": null,
+        "after": "pay 원장 호출 제거 완료"
+      }
+    }
+  },
+  {
+    "id": "E05",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "ledger-db = ledger Service",
+      "id": "E05"
+    },
+    "content_sha": "d9b7f5cd76dd0234bbf610514945ab760bbff6934831231b9e1daaeaf887be8e",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614242+00:00",
+    "status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "GLOSS-01 v1 §1: ledger-db는 DataStore로 분리한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621681+00:00",
+    "changes": {
+      "id": {
+        "before": null,
+        "after": "E05"
+      },
+      "claim": {
+        "before": null,
+        "after": "ledger-db = ledger Service"
+      }
+    }
+  },
+  {
+    "id": "E06",
+    "revision": 1,
+    "kind": "error_example",
+    "payload": {
+      "claim": "payment와 pay 별도 서비스",
+      "id": "E06"
+    },
+    "content_sha": "366876ae77ee9a2a6e6998fe545f7ada80f5da455c091275f9336fcb1e87709a",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614250+00:00",
+    "status": "rejected",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "GLOSS-01 v1 §1: payment를 pay 별칭으로 정규화한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621682+00:00",
+    "changes": {
+      "id": {
+        "before": null,
+        "after": "E06"
+      },
+      "claim": {
+        "before": null,
+        "after": "payment와 pay 별도 서비스"
+      }
+    }
+  },
+  {
+    "id": "F01",
+    "revision": 1,
+    "kind": "assertion",
+    "payload": {
+      "assertion_id": "F01",
+      "document_status": "approved",
+      "object": "order",
+      "object_type": "Service",
+      "predicate": "depends_on",
+      "quote": "쇼핑몰 서버(shop)는 주문서가 접수되면 주문 서비스(order)의 POST /v1/orders를 호출한다.",
+      "review_status": "pending",
+      "reviewer": "",
+      "scope": "직영몰 카드 선결제, 내부 직접 HTTP 호출",
+      "section": "§1",
+      "snapshot_id": "S1",
+      "source_id": "ARCH-01",
+      "subject": "shop",
+      "subject_type": "Service",
+      "version": "v1"
+    },
+    "content_sha": "2fd1e25ab33cf9c02b477274ef085394c71e9fac2cd840e53007ec6d6a83ea0a",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.613986+00:00",
+    "status": "approved",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v1 §1: shop이 order 주문 API를 직접 호출한다.",
+    "reviewed_at": "2026-10-03T14:27:43.620626+00:00",
+    "changes": {
+      "version": {
+        "before": null,
+        "after": "v1"
+      },
+      "predicate": {
+        "before": null,
+        "after": "depends_on"
+      },
+      "subject_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "document_status": {
+        "before": null,
+        "after": "approved"
+      },
+      "snapshot_id": {
+        "before": null,
+        "after": "S1"
+      },
+      "source_id": {
+        "before": null,
+        "after": "ARCH-01"
+      },
+      "quote": {
+        "before": null,
+        "after": "쇼핑몰 서버(shop)는 주문서가 접수되면 주문 서비스(order)의 POST /v1/orders를 호출한다."
+      },
+      "assertion_id": {
+        "before": null,
+        "after": "F01"
+      },
+      "reviewer": {
+        "before": null,
+        "after": ""
+      },
+      "section": {
+        "before": null,
+        "after": "§1"
+      },
+      "review_status": {
+        "before": null,
+        "after": "pending"
+      },
+      "object_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "object": {
+        "before": null,
+        "after": "order"
+      },
+      "subject": {
+        "before": null,
+        "after": "shop"
+      },
+      "scope": {
+        "before": null,
+        "after": "직영몰 카드 선결제, 내부 직접 HTTP 호출"
+      }
+    }
+  },
+  {
+    "id": "F02",
+    "revision": 1,
+    "kind": "assertion",
+    "payload": {
+      "assertion_id": "F02",
+      "document_status": "approved",
+      "object": "pay",
+      "object_type": "Service",
+      "predicate": "depends_on",
+      "quote": "주문 서비스(order)는 재고 예약과 견적 유효기간을 확인한 뒤 결제 서비스(pay)의 POST /v1/payments/authorize를 호출한다.",
+      "review_status": "pending",
+      "reviewer": "",
+      "scope": "직영몰 카드 선결제, 내부 직접 HTTP 호출",
+      "section": "§1",
+      "snapshot_id": "S1",
+      "source_id": "ARCH-01",
+      "subject": "order",
+      "subject_type": "Service",
+      "version": "v1"
+    },
+    "content_sha": "bb5ec3ce3695ae9214767fae6c2c0fa9ca35ea4b7b0aa45c2aa3c870be9f4b1c",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614178+00:00",
+    "status": "approved",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v1 §1: order가 pay 승인 API를 직접 호출한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621133+00:00",
+    "changes": {
+      "version": {
+        "before": null,
+        "after": "v1"
+      },
+      "predicate": {
+        "before": null,
+        "after": "depends_on"
+      },
+      "subject_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "document_status": {
+        "before": null,
+        "after": "approved"
+      },
+      "snapshot_id": {
+        "before": null,
+        "after": "S1"
+      },
+      "source_id": {
+        "before": null,
+        "after": "ARCH-01"
+      },
+      "quote": {
+        "before": null,
+        "after": "주문 서비스(order)는 재고 예약과 견적 유효기간을 확인한 뒤 결제 서비스(pay)의 POST /v1/payments/authorize를 호출한다."
+      },
+      "assertion_id": {
+        "before": null,
+        "after": "F02"
+      },
+      "reviewer": {
+        "before": null,
+        "after": ""
+      },
+      "section": {
+        "before": null,
+        "after": "§1"
+      },
+      "review_status": {
+        "before": null,
+        "after": "pending"
+      },
+      "object_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "object": {
+        "before": null,
+        "after": "pay"
+      },
+      "subject": {
+        "before": null,
+        "after": "order"
+      },
+      "scope": {
+        "before": null,
+        "after": "직영몰 카드 선결제, 내부 직접 HTTP 호출"
+      }
+    }
+  },
+  {
+    "id": "F03",
+    "revision": 1,
+    "kind": "assertion",
+    "payload": {
+      "assertion_id": "F03",
+      "document_status": "approved",
+      "object": "ledger",
+      "object_type": "Service",
+      "predicate": "depends_on",
+      "quote": "결제 서비스(pay)는 PG사의 승인 응답을 받은 뒤 원장 서비스(ledger)의 POST /v1/journal-entries를 동기로 호출한다.",
+      "review_status": "pending",
+      "reviewer": "",
+      "scope": "직영몰 카드 선결제, 내부 직접 HTTP 호출",
+      "section": "§2",
+      "snapshot_id": "S1",
+      "source_id": "ARCH-01",
+      "subject": "pay",
+      "subject_type": "Service",
+      "version": "v1"
+    },
+    "content_sha": "b680e909cb3ed27fa7b1ce233250c6dca07d236a66f9db3e60f5c5a0f29a8991",
+    "action": "created",
+    "actor": "시스템 초기화(사람 검토 아님)",
+    "reason": "현재 추출·오류 예문을 최초 후보로 등록",
+    "at": "2026-10-03T14:27:43.614197+00:00",
+    "status": "approved",
+    "reviewer": "교육용 판정 예시(실제 검토 아님)",
+    "review_reason": "ARCH-01 v1 §2: pay가 ledger 쓰기 API를 직접 호출한다.",
+    "reviewed_at": "2026-10-03T14:27:43.621668+00:00",
+    "changes": {
+      "version": {
+        "before": null,
+        "after": "v1"
+      },
+      "predicate": {
+        "before": null,
+        "after": "depends_on"
+      },
+      "subject_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "document_status": {
+        "before": null,
+        "after": "approved"
+      },
+      "snapshot_id": {
+        "before": null,
+        "after": "S1"
+      },
+      "source_id": {
+        "before": null,
+        "after": "ARCH-01"
+      },
+      "quote": {
+        "before": null,
+        "after": "결제 서비스(pay)는 PG사의 승인 응답을 받은 뒤 원장 서비스(ledger)의 POST /v1/journal-entries를 동기로 호출한다."
+      },
+      "assertion_id": {
+        "before": null,
+        "after": "F03"
+      },
+      "reviewer": {
+        "before": null,
+        "after": ""
+      },
+      "section": {
+        "before": null,
+        "after": "§2"
+      },
+      "review_status": {
+        "before": null,
+        "after": "pending"
+      },
+      "object_type": {
+        "before": null,
+        "after": "Service"
+      },
+      "object": {
+        "before": null,
+        "after": "ledger"
+      },
+      "subject": {
+        "before": null,
+        "after": "pay"
+      },
+      "scope": {
+        "before": null,
+        "after": "직영몰 카드 선결제, 내부 직접 HTTP 호출"
+      }
+    }
+  }
+]

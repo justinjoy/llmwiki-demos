@@ -1,0 +1,10 @@
+[
+  {
+    "alias": "payment",
+    "canonical_id": "pay",
+    "source_id": "GLOSS-01",
+    "version": "v1",
+    "section": "§1",
+    "quote": "결제 서비스의 공식 ID는 pay이며, 기존 문서의 payment도 같은 서비스를 가리킨다."
+  }
+]

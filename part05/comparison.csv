@@ -1,0 +1,4 @@
+snapshot,kind,direct,reach,candidate,candidate_doc,services
+S1,reference,3,6,3,3,"order,pay,shop"
+S2,scenario,4,6,3,3,"order,pay,shop"
+S3,scenario,3,5,2,1,"order,shop"

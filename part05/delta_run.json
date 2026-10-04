@@ -1,0 +1,54 @@
+{
+  "status": "success",
+  "engine": "pyrewire",
+  "engine_version": "1.1.2",
+  "mode": "same_session_EasySession.step",
+  "steps": [
+    {
+      "action": "insert both directions",
+      "events": [
+        [
+          "mutual",
+          [
+            "alice",
+            "bob"
+          ],
+          1
+        ],
+        [
+          "mutual",
+          [
+            "bob",
+            "alice"
+          ],
+          1
+        ]
+      ]
+    },
+    {
+      "action": "insert one direction",
+      "events": []
+    },
+    {
+      "action": "remove reverse direction",
+      "events": [
+        [
+          "mutual",
+          [
+            "alice",
+            "bob"
+          ],
+          -1
+        ],
+        [
+          "mutual",
+          [
+            "bob",
+            "alice"
+          ],
+          -1
+        ]
+      ]
+    }
+  ]
+}

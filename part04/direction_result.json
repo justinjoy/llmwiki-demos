@@ -1,0 +1,31 @@
+{
+  "status": "success",
+  "engine": "pyrewire",
+  "engine_version": "1.1.2",
+  "api": "EasySession.snapshot",
+  "relations": {
+    "direct": [
+      [
+        "pay",
+        "ledger"
+      ],
+      [
+        "pay",
+        "order"
+      ],
+      [
+        "shop",
+        "order"
+      ]
+    ],
+    "pay_doc": [
+      [
+        "ARCH-01:v1"
+      ],
+      [
+        "INC-03:v1"
+      ]
+    ]
+  },
+  "lesson": "두 열 모두 symbol이므로 역방향도 실행 성공. 원문·관계 사전과 대조해야 의미 오류를 찾습니다."
+}

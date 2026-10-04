@@ -1,0 +1,17 @@
+{
+  "assertion_id": "F04",
+  "subject": "notify",
+  "predicate": "depends_on",
+  "object": "order",
+  "subject_type": "Service",
+  "object_type": "Service",
+  "source_id": "RUN-02",
+  "version": "v1",
+  "section": "§1",
+  "quote": "알림 워커(notify)는 주문 완료 이벤트를 받으면 주문 서비스(order)의 상태 조회 API를 호출한다. 호출 경로는 GET /v1/orders/{order_id}/status다.",
+  "document_status": "approved",
+  "scope": "비동기 알림 워커의 직접 HTTP 상태 조회",
+  "review_status": "pending",
+  "reviewer": "",
+  "snapshot_id": "S1b"
+}

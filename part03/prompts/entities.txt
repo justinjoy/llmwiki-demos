@@ -1,0 +1,18 @@
+원문과 앞 단계 후보·별칭 결과를 대조하여 개체와 속성을 추출하라.
+entities.json에 저장할 JSON 객체만 반환하라.
+최상위 키는 services, apis, excluded_from_service_graph이며 값은 모두 배열이다.
+source_id에는 버전을 붙이지 말라. 예: "source_id":"ARCH-01", "version":"v1". section은 "§1" 형식이다.
+type은 Service, API, DataStore, BatchJob 중 해당 값을 사용한다. timeout_seconds는 문자열이 아닌 JSON 숫자다.
+services에는 ARCH-01 v1 직접 호출 경로에 있는 Service를 기록하라.
+서비스 항목: id, type, owner_team, source_id, version, section, quote.
+운영 담당 팀은 원문에서 찾아 기록하고 현재 당직자 개인이나 연락처를 만들어 넣지 말라.
+apis에는 이 직접 호출 경로에서 사용되는 API를 기록하라.
+API 항목: id, type, owner_service, method, path, caller, timeout_seconds, source_id, version, section, quote.
+id는 api:소유서비스:HTTP메서드:경로 형식의 수업용 식별자다.
+API를 제공하는 서비스, 호출하는 서비스, 운영 담당 팀을 구분하라.
+timeout_seconds는 해당 caller→API 호출 구간의 값이며 모든 API의 공통 제한 시간이 아니다.
+excluded_from_service_graph에는 GLOSS-01의 DataStore와 BatchJob을 기록하라.
+제외 항목: id, type, reason, source_id, version, section, quote.
+모든 quote는 해당 원문 절에 있는 연속 문자열로 복사하라.
+ARCH-01 v2 검토안의 이벤트·워커를 운영 배포된 현재 API로 확정하지 말라.
+앞 단계 LLM 결과에 오류가 있어도 그대로 근거로 삼지 말고 원문을 우선하라.

@@ -1,0 +1,8 @@
+7교시 실습 B: RUN-02 v1 §1에서 notify의 직접 HTTP 호출을 추출하라.
+한국어로 설명하되 F04_pending.json에 저장할 JSON 객체 하나만 출력하라.
+assertion_id="F04", subject="notify", predicate="depends_on", object="order", subject_type="Service", object_type="Service".
+source_id="RUN-02", version="v1", section="§1"이며 quote는 이 절의 호출 근거를 연속 문자열로 정확히 인용하라.
+document_status="approved", scope="비동기 알림 워커의 직접 HTTP 상태 조회", review_status="pending", reviewer="", snapshot_id="S1b".
+worker가 비동기라는 설명과 order 상태 조회 API가 직접 HTTP 호출이라는 사실을 구분하라.
+RUN-02 §2는 발송 보류·재조회·확정 주문 취소 없음의 설명 근거이며 이를 결제 실패 사실로 만들지 말라.
+문서 승인이 추출 승인인 것은 아니다. 사람 검토나 운영 장애를 꾸며내지 말라.

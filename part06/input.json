@@ -1,0 +1,55 @@
+{
+  "snapshot_id": "S1",
+  "candidates": [
+    "order",
+    "pay",
+    "shop"
+  ],
+  "initial_doc_ids": [
+    "ADR-07:v1",
+    "ARCH-01:v1",
+    "INC-03:v1"
+  ],
+  "rule_id": "candidate-v1",
+  "paths": [
+    {
+      "service": "order",
+      "target": "ledger",
+      "assertion_ids": [
+        "F02",
+        "F03"
+      ],
+      "services": [
+        "order",
+        "pay",
+        "ledger"
+      ]
+    },
+    {
+      "service": "pay",
+      "target": "ledger",
+      "assertion_ids": [
+        "F03"
+      ],
+      "services": [
+        "pay",
+        "ledger"
+      ]
+    },
+    {
+      "service": "shop",
+      "target": "ledger",
+      "assertion_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "services": [
+        "shop",
+        "order",
+        "pay",
+        "ledger"
+      ]
+    }
+  ]
+}

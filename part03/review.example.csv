@@ -1,0 +1,10 @@
+id,판정,근거 또는 이유,검토자
+F01,approved,ARCH-01 v1 §1: shop이 order 주문 API를 직접 호출한다.,교육용 판정 예시(실제 검토 아님)
+F02,approved,ARCH-01 v1 §1: order가 pay 승인 API를 직접 호출한다.,교육용 판정 예시(실제 검토 아님)
+F03,approved,ARCH-01 v1 §2: pay가 ledger 쓰기 API를 직접 호출한다.,교육용 판정 예시(실제 검토 아님)
+E01,rejected,ARCH-01 v1 §2: 호출 방향은 pay → ledger이다.,교육용 판정 예시(실제 검토 아님)
+E02,rejected,ARCH-01 v1 §3: pay 운영 팀은 결제정산팀이다. entities.json에서 올바른 팀을 보존한다.,교육용 판정 예시(실제 검토 아님)
+E03,rejected,ARCH-01 v1 §1·§2: shop → ledger는 간접 경로이며 직접 입력에서 제외한다.,교육용 판정 예시(실제 검토 아님)
+E04,held,ARCH-01 v2 §1·§2: 운영 미반영 검토안으로 배포·승인 확인 전 보류한다.,교육용 판정 예시(실제 검토 아님)
+E05,rejected,GLOSS-01 v1 §1: ledger-db는 DataStore로 분리한다.,교육용 판정 예시(실제 검토 아님)
+E06,rejected,GLOSS-01 v1 §1: payment를 pay 별칭으로 정규화한다.,교육용 판정 예시(실제 검토 아님)

@@ -1,0 +1,11 @@
+.decl reach(src: symbol, dst: symbol)
+
+reach(X, Y) :- depends_on(X, Y).
+reach(X, Z) :- depends_on(X, Y), reach(Y, Z).
+.decl fail(svc: symbol)
+.decl candidate(svc: symbol)
+.decl candidate_doc(svc: symbol, doc: symbol)
+
+fail("ledger").
+candidate(S) :- reach(S, F), fail(F), S != F.
+candidate_doc(S, D) :- candidate(S), about(D, S).

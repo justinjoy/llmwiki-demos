@@ -1,0 +1,33 @@
+{
+  "origin": "최종 인포그래픽 교육자료 + part08 위키 초안",
+  "notice": "교육용 합성 사례. S1/S1b는 승인 예시, S2/S3는 설계 가정. 위키는 사람 검토 대기.",
+  "files": {
+    "ontology/aliases.json": "a9a9fbb889d58f1903cf9de9dcfa4b86dd96ec1a27c6cf8adc59de9c7fe2d096",
+    "ontology/entities.json": "ba3a732e1f771df346c4f4fa81fe38b501c6d5b6d915f72223ba1b7e553aeb7e",
+    "ontology/relations.csv": "b605a7b3f53707a5d3d1d94ab4f78ad4e69b8d2d11f0c323c9bd9928251599fc",
+    "ontology/types.csv": "4c23c37b2ea461692361d42b4cbfc33f17d381d65cef3eb92cb4a745144aa14e",
+    "raw/ADR-07_v1.md": "dd3210c314a854026b165ecfc85a33cfb9e34b696adbe622125656a283371194",
+    "raw/ARCH-01_v1.md": "0279ec57ac58b0a60ebafd08bcd447194ad14cc32dcb5b53f2a2c7c8e6d5dd4a",
+    "raw/ARCH-01_v2.md": "b2655bff34781417338841bd6d12a4f06414f9ad4011317b828deb08f2c8d687",
+    "raw/CHG-12_v1.md": "18798434ddfc2576684c4767842389902df17da81105f381b7eaff767a7daa29",
+    "raw/GLOSS-01_v1.md": "e09745a4d55a8f74941c0318100073dd4569eab25b0f76671b71546798150685",
+    "raw/INC-03_v1.md": "808ec81faf2e51eaa06aaa7c7daed01ad3e7992ef6a4eaa197039716b8a22d4b",
+    "raw/OPS-04_v1.md": "e1123e09c4a4c1a35f555118e5076b7ee7a9dc73ceeb7688598e5543ad6eec05",
+    "raw/README.md": "8c81b68cb26a1b4800f4278feb8f82192628f984acd6fef1c91f9a7c162432cf",
+    "raw/RUN-02_v1.md": "8f90f24354cdeb8cf44320fe407d92267d836bdbf5178228abd912ff21747a29",
+    "snapshots/S1.dl": "acf387a154dca7fdf2baa56aeff20002fe9437a2358ca68353524dea0b38a949",
+    "snapshots/S1.json": "dec3d2bbcfaea453fe0dfb2c826159d6bbb1f3b929777c3b3b280369db855d8e",
+    "snapshots/S1b.dl": "e6732a610fb4b851bc333624229589600f9ab6496dc97a7e14c49c37c4ed126e",
+    "snapshots/S1b.json": "cffb94d2fbe937637e9a1fcd234b8e1722c6c1f5458918ba8f3db2d722983923",
+    "snapshots/S2.dl": "1c915dc95cdb11a826556b749a2f91e93df27cc2a2106e03888bc6c363fad8b6",
+    "snapshots/S2.json": "e6376d5c3ea6e227b0d0c54e8d2b66b1a329127b3a701e22036f89565dd01620",
+    "snapshots/S3.dl": "e0515996d4c33fa6599d765bbe62e359e351d0b6d51c17a258cacc5db0e378cd",
+    "snapshots/S3.json": "a62c47213fcc477d5a63e7e00edaf795bd39c665af43437a5be6d6f662a3177e",
+    "wiki/analysis/ledger-impact-S1b.md": "16745a1307d69fb110406699b7f832cedc843f86d6e10c90e4187e8b448bb704",
+    "wiki/incidents/INC-03.md": "713d9fb8556f252c21cbe413372343554aef74768b421c8f19e4134770bece30",
+    "wiki/index.md": "81fceb3e6091ba6dcefd683ee261e756e928ca6cd307cc83b71e531a6783166a",
+    "wiki/log.md": "a9f3013c54925164bf9c1a3b91297b27b768822fa63671a683dbe7d6e8bd8e0b",
+    "wiki/services/order.md": "5dcd39b35da9d1c5d88d90d60b73d9e10d1316e02d27ac643cec9422bb1c1a91",
+    "wiki/services/pay.md": "81b24fad90064e95c9683a08554f1d1e91aebb3f9e987922b56b28c7cfc7763f"
+  }
+}

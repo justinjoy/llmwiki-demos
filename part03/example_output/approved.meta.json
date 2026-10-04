@@ -1,0 +1,53 @@
+{
+  "status": "current",
+  "example": true,
+  "exported_at": "2026-10-03T14:31:58.872002+00:00",
+  "sha256": "b06d684853f186dbd2ae7ebfebf867e8bc6e5d68a0babc3d5c7706e7f94ce5a9",
+  "heads": {
+    "E01": {
+      "revision": 1,
+      "sha256": "d5716a8c0b18ee274dff7e53098fc1dedbdf06c03ebabe47e0a654767c1d14f8",
+      "status": "rejected"
+    },
+    "E02": {
+      "revision": 1,
+      "sha256": "69c1d9e972be1d29d462a58c6ecd6eeb2d0ce11172906cdb10bd690d14658ebb",
+      "status": "rejected"
+    },
+    "E03": {
+      "revision": 1,
+      "sha256": "5e63fbaf4899f7b02eba5694c5e6a71ff3565a603a27104275e239291b55f4f6",
+      "status": "rejected"
+    },
+    "E04": {
+      "revision": 1,
+      "sha256": "484818d6e0352092629cc259e44f5a15b44c22b606724fb0fbaf4b67df876fec",
+      "status": "held"
+    },
+    "E05": {
+      "revision": 1,
+      "sha256": "d9b7f5cd76dd0234bbf610514945ab760bbff6934831231b9e1daaeaf887be8e",
+      "status": "rejected"
+    },
+    "E06": {
+      "revision": 1,
+      "sha256": "366876ae77ee9a2a6e6998fe545f7ada80f5da455c091275f9336fcb1e87709a",
+      "status": "rejected"
+    },
+    "F01": {
+      "revision": 1,
+      "sha256": "2fd1e25ab33cf9c02b477274ef085394c71e9fac2cd840e53007ec6d6a83ea0a",
+      "status": "approved"
+    },
+    "F02": {
+      "revision": 1,
+      "sha256": "bb5ec3ce3695ae9214767fae6c2c0fa9ca35ea4b7b0aa45c2aa3c870be9f4b1c",
+      "status": "approved"
+    },
+    "F03": {
+      "revision": 1,
+      "sha256": "b680e909cb3ed27fa7b1ce233250c6dca07d236a66f9db3e60f5c5a0f29a8991",
+      "status": "approved"
+    }
+  }
+}

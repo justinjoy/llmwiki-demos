@@ -1,0 +1,7 @@
+.decl depends_on(src: symbol, dst: symbol)
+.decl about(doc: symbol, svc: symbol)
+.decl direct(src: symbol, dst: symbol)
+.decl pay_doc(doc: symbol)
+
+direct(X, Y) :- depends_on(X, Y).
+pay_doc(D) :- about(D, "pay").

@@ -1,0 +1,7 @@
+// reference snapshot S1
+depends_on("shop", "order").
+depends_on("order", "pay").
+depends_on("pay", "ledger").
+about("ARCH-01:v1", "pay").
+about("INC-03:v1", "pay").
+about("ADR-07:v1", "order").

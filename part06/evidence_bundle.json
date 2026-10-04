@@ -1,0 +1,87 @@
+{
+  "snapshot_id": "S1",
+  "candidates": [
+    "shop",
+    "order",
+    "pay"
+  ],
+  "initial_doc_ids": [
+    "ARCH-01:v1",
+    "ADR-07:v1",
+    "INC-03:v1"
+  ],
+  "expanded_doc_ids": [
+    "OPS-04:v1"
+  ],
+  "expansion_reason": "ADR-07 v1 §3의 참조를 따라 추가된 문서",
+  "items": [
+    {
+      "service": "order",
+      "source_id": "ADR-07",
+      "version": "v1",
+      "section": "§1",
+      "quote": "주문 서비스(order)는 결제 서비스(pay)를 동기로 호출하고, 결제 완료 응답을 받은 후 주문을 확정한다. 출고 시스템에는 확정된 주문(CONFIRMED)만 전달한다.",
+      "evidence_kind": "설계 결정",
+      "explanation": "주문 서비스가 결제 서비스를 동기로 호출하고 결제 완료 응답을 받은 후 주문을 확정한다는 설계 결정",
+      "interpretation": null
+    },
+    {
+      "service": "order",
+      "source_id": "ADR-07",
+      "version": "v1",
+      "section": "§2",
+      "quote": "이번에는 결제 결과를 확인한 뒤 주문을 확정하는 방식으로 진행한다. 결제 응답이 늦어지면 주문 완료도 늦어지지만, 미결제 주문이 출고되는 문제를 줄일 수 있다.",
+      "evidence_kind": "설계 이유",
+      "explanation": "결제 완료 응답을 확인한 뒤 주문을 확정하여 미결제 주문이 출고되는 문제를 줄이기 위한 설계 이유",
+      "interpretation": null
+    },
+    {
+      "service": "order",
+      "source_id": "INC-03",
+      "version": "v1",
+      "section": "§1",
+      "quote": "2026년 8월 18일 09:42부터 10:07까지 원장 저장이 지연되면서 일부 카드 결제 주문이 ‘결제 확인 중’에 머물렀다. 해당 시간대 카드 결제 주문 4,900건 중 186건의 주문 확정이 지연됐다.",
+      "evidence_kind": "186/4,900건 관측",
+      "explanation": "장애 시간대 발생한 카드 결제 주문 4,900건 중 186건의 주문 확정 지연 관측 기록",
+      "interpretation": null
+    },
+    {
+      "service": "order",
+      "source_id": "INC-03",
+      "version": "v1",
+      "section": "§3",
+      "quote": "신규 주문의 처리 지연은 25분간 지속됐다. 지연 주문의 대사까지 마치는 데에는 최초 경보부터 42분이 걸렸다.",
+      "evidence_kind": "25분과 42분",
+      "explanation": "신규 주문 처리 지연 지속 시간 25분 및 지연 주문 대사 완료 소요 시간 42분 기록",
+      "interpretation": null
+    },
+    {
+      "service": "pay",
+      "source_id": "OPS-04",
+      "version": "v1",
+      "section": "§1",
+      "quote": "원장 저장 타임아웃이 5분 이상 이어지고 PG 승인 내역과 원장 기록의 불일치가 확인되면 대사 작업의 일시 중지를 검토한다. 요청 로그와 큐 현황을 확인해 대상 가맹점 ID(merchant_id) 목록을 작성한다. 고객의 재결제 여부도 함께 확인한다.\n\n결제정산팀 당직자와 장애 대응 책임자의 승인을 받은 뒤 작업한다.",
+      "evidence_kind": "진입 조건과 건별 승인",
+      "explanation": "대사 작업 일시 중지 검토를 위한 진입 조건 및 담당자/책임자의 승인 필요 절차",
+      "interpretation": null
+    },
+    {
+      "service": "pay",
+      "source_id": "OPS-04",
+      "version": "v1",
+      "section": "§2",
+      "quote": "승인받은 가맹점의 결제 대사 큐 소비를 일시 중지한다. PG 승인 API와 다른 가맹점의 대사 작업은 계속 운영한다.",
+      "evidence_kind": "조치 범위",
+      "explanation": "대사 큐 중지 조치 대상 가맹점 범위 및 타 가맹점과 PG 승인 API의 지속 운영 범위",
+      "interpretation": null
+    }
+  ],
+  "gaps": [
+    "현재 지표: 미확인",
+    "불일치: 미확인",
+    "영향 가맹점: 미확인",
+    "승인 기록: 미확인",
+    "향후 복구 시각: 미확인"
+  ],
+  "mode": "LLM 생성 초안; 원문 인용 자동 검사 후 사람 검토 필요"
+}

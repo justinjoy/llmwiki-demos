@@ -1,0 +1,50 @@
+{
+  "mode": "manual_plan_with_real_wirelog",
+  "snapshot_id": "S1",
+  "budget": 6,
+  "steps": [
+    {
+      "tool": "find_candidates",
+      "input": {
+        "target": "ledger",
+        "snapshot_id": "S1"
+      },
+      "next": "services를 문서 조회 인자로"
+    },
+    {
+      "tool": "find_documents",
+      "next": "첫 about 범위의 doc_ids"
+    },
+    {
+      "tool": "search_context",
+      "next": "초기 원문 읽기; ADR-07 §3과 ARCH-01 §4의 참조 찾기"
+    },
+    {
+      "tool": "search_context",
+      "input": {
+        "doc_ids": [
+          "OPS-04:v1"
+        ]
+      },
+      "reason": "ADR-07 §3의 후속 절차"
+    },
+    {
+      "tool": "search_context",
+      "input": {
+        "doc_ids": [
+          "RUN-02:v1"
+        ]
+      },
+      "reason": "ARCH-01 §4의 운영 인수서"
+    },
+    {
+      "tool": "trace_path",
+      "input": {
+        "service": "shop",
+        "target": "ledger",
+        "snapshot_id": "S1"
+      },
+      "next": "F01/F02/F03과 원문 대조"
+    }
+  ]
+}

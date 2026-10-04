@@ -1,0 +1,26 @@
+[
+  {
+    "id": "E01",
+    "claim": "ledger depends_on pay"
+  },
+  {
+    "id": "E02",
+    "claim": "pay 담당 팀 Platform"
+  },
+  {
+    "id": "E03",
+    "claim": "shop depends_on ledger 직접 호출"
+  },
+  {
+    "id": "E04",
+    "claim": "pay 원장 호출 제거 완료"
+  },
+  {
+    "id": "E05",
+    "claim": "ledger-db = ledger Service"
+  },
+  {
+    "id": "E06",
+    "claim": "payment와 pay 별도 서비스"
+  }
+]
