@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""1교시: 원문 포함 → CLI 실행 → 위키/탐색 기록 저장."""
+"""1교시: 청크별 근거 추출 → 크기에 맞춰 선택 → 위키/탐색 기록 저장."""
 import argparse
 from pathlib import Path
 import sys
-import run_prompt
+import chunk_pipeline
 
 LESSON = Path(__file__).resolve().parent
 RAW = [LESSON / "raw" / name for name in ("ARCH-01_v1.md", "ADR-07_v1.md", "INC-03_v1.md")]
@@ -26,7 +26,9 @@ def main():
     p.add_argument("--timeout", type=float, default=300)
     p.add_argument("--overwrite", action="store_true")
     p.add_argument("--dry-run", action="store_true")
+    chunk_pipeline.add_options(p)
     args = p.parse_args()
+    budget = {"used": 0}
     tasks = list(TASKS) if args.task == "all" else [args.task]
     # Check all destinations before starting any billed request.
     if not args.overwrite and not args.dry_run:
@@ -47,7 +49,9 @@ def main():
             params.context = [str(f) for f in RAW + [LESSON / rel for rel in extra]]
             params.output = str(LESSON / output)
             params.log_dir = str(LESSON / "runs")
-            result = run_prompt.execute(params)
+            params.source_root = str(LESSON)
+            params.derived_context = [str(LESSON / rel) for rel in extra]
+            result = chunk_pipeline.execute(params, budget)
             if result:
                 return result
         if args.dry_run and args.task == "all":

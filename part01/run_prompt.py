@@ -71,6 +71,9 @@ def execute(args):
     if output.exists() and not args.overwrite and not args.dry_run:
         raise ValueError(f"결과 파일이 이미 있습니다: {output}\n다시 생성하려면 --overwrite를 지정하세요. 기존 파일은 실행 기록에 백업합니다.")
     prompt = build_prompt(prompt_file, contexts, output)
+    limit = getattr(args, "max_prompt_chars", None)
+    if limit is not None and len(prompt) > limit:
+        raise ValueError(f"전체 입력이 {limit}자 한도를 넘습니다.")
     log_root = Path(args.log_dir).resolve()
     log_root.mkdir(parents=True, exist_ok=True)
     run_dir = Path(tempfile.mkdtemp(prefix=datetime.now().strftime("%Y%m%d-%H%M%S-"), dir=log_root))
@@ -120,6 +123,9 @@ def execute(args):
             record("cli_error", returncode=proc.returncode)
             print(f"CLI 실행 실패({proc.returncode}). 결과 파일은 저장하지 않았습니다.\n오류 기록: {run_dir / 'stderr.txt'}", file=sys.stderr)
             return proc.returncode if 0 < proc.returncode < 126 else 1
+        response_limit = getattr(args, "max_response_bytes", None)
+        if response_limit is not None and (run_dir / "stdout.txt").stat().st_size > response_limit:
+            raise ValueError(f"응답이 {response_limit} bytes 한도를 넘습니다.")
         response = clean_response((run_dir / "stdout.txt").read_text(encoding="utf-8"))
         if output.exists():
             if not args.overwrite:
