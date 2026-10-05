@@ -270,7 +270,9 @@ def verify_export_file(path):
     return rows
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);sub=p.add_subparsers(dest='command',required=True)
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root',type=Path,default=ROOT,help='review.csv와 .review 저장소가 있는 실습 폴더 (기본: part03)')
+    sub=p.add_subparsers(dest='command',required=True)
     sub.add_parser('init');sub.add_parser('list');sub.add_parser('worksheet')
     show=sub.add_parser('show');show.add_argument('id');show.add_argument('--output',type=Path)
     hist=sub.add_parser('history');hist.add_argument('id',nargs='?');hist.add_argument('--output',type=Path)
@@ -280,7 +282,7 @@ def main():
         if name=='revise':a.add_argument('--file',type=Path,required=True);a.add_argument('--kind',choices=['assertion','error_example'])
     a=sub.add_parser('decide');a.add_argument('id');a.add_argument('--revision',type=int,required=True);a.add_argument('--status',choices=['approved','held','rejected'],required=True);a.add_argument('--reviewer',required=True);a.add_argument('--reason',required=True)
     a=sub.add_parser('import-review');a.add_argument('--file',type=Path)
-    args=p.parse_args();store=Store()
+    args=p.parse_args();store=Store(args.root)
     try:
         if args.command=='init':print('등록 완료. review.csv에 최신 버전의 판정을 기록하세요.' if store.init() else '이미 초기화됐습니다. 기존 후보와 이력을 유지합니다.')
         elif args.command=='list':

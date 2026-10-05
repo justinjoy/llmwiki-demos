@@ -30,7 +30,52 @@ python3 review_workflow.py list
 python3 review_workflow.py show F03
 ```
 
-출력에서 버전, 판정, 수정자, 변경 이유, 원문 인용을 확인합니다. `F03` r1의 예시는 `pay → ledger`입니다.
+### 후보 내용은 어디서 보는가
+
+CSV는 판정 입력표입니다. 후보 내용은 위 `show F03` 명령의 **터미널 출력에서 `payload`**를 펼쳐 읽습니다. 편집기에서 읽으려면 아래처럼 JSON 파일로 저장한 뒤 `candidate-F03.json`을 엽니다. 이 파일은 열람용 복사본이며 원문이나 검토 상태를 바꾸지 않습니다.
+
+```sh
+python3 review_workflow.py show F03 --output candidate-F03.json
+```
+
+`payload.subject`, `predicate`, `object`가 검토할 관계입니다. `source_id`, `version`, `section`으로 `raw/`의 해당 문서를 찾아 `quote`와 주변 문장을 대조합니다. `scope`와 문서의 승인·적용 상태도 확인합니다.
+
+예를 들어 현재 F03 r2는 `pay depends_on ledger`입니다. `raw/ARCH-01_v1.md`를 편집기로 열고 **「2. 결제 내역 기록과 타임아웃」**을 읽습니다. pay가 ledger를 동기로 호출한다는 문장이 인용문과 맞는지, 직접 호출이라는 관계와 범위가 맞는지 확인한 뒤 CSV의 F03 행에 판정·이유·검토자를 적습니다. 버전 번호만 보고 오류 여부를 판단하지 않습니다. 격리 시연의 F03 r2는 일부러 방향을 뒤집은 별개의 후보입니다.
+
+### 해시는 어떻게 따라가는가
+
+해시를 주소처럼 열거나 원문으로 변환하지 않습니다. **CSV의 `id`로 조회**하고, 같은 버전·내용인지 비교합니다.
+
+| CSV 열 | `show F03` 출력에서 비교할 항목 |
+| --- | --- |
+| `id` | `id` |
+| `revision` | `revision` |
+| `content_sha256` | `content_sha` 전체 값 |
+
+`content_sha`는 키를 정렬하고 공백을 제거한 후보 JSON의 SHA-256입니다. JSON 파일 자체의 바이트 해시나 원문 문서의 해시가 아닙니다. 다른 필드인 `source_sha`와 혼동하지 마세요. `import-review`가 버전과 내용 해시를 자동 검사하므로 사람이 해시를 계산하거나 수정할 필요는 없습니다. 세 값이 다르면 다른 폴더나 오래된 CSV를 보고 있는지 확인하고, 편집 중인 파일을 보관한 뒤 최신 후보를 다시 검토합니다.
+
+### 별도 시연 폴더의 후보를 볼 때
+
+기본 `show`는 part03의 저장소를 조회합니다. 시연 화면에 출력된 **review.csv가 있는 폴더의 실제 경로**를 `--root`에 넣어 같은 저장소를 조회합니다. 아래 경로는 실제 출력 경로로 바꿉니다. 이 옵션은 `show`보다 앞에 씁니다.
+
+```sh
+python3 review_workflow.py --root "runs/review-walkthrough-실제폴더명" show F03
+```
+
+원문도 그 폴더의 `raw/ARCH-01_v1.md`에서 확인합니다. 현재 터미널의 작업 폴더만 바꿔서는 조회 저장소가 바뀌지 않습니다.
+
+### E01~E06의 주장은 어디서 보는가
+
+`python3 review_workflow.py show E01`을 실행하면 `payload.claim`에 `ledger depends_on pay`가 나옵니다. E 후보는 잘못된 주장이나 보류할 주장을 찾는 교육용 예문으로, 자체 출처 필드가 없습니다. 다음 원문을 직접 찾아 대조합니다. 후보 내용이 수정됐다면 현재 `show` 출력에 맞춰 다시 확인합니다.
+
+| 후보 | 열어 볼 파일과 절 | 확인할 내용 |
+| --- | --- | --- |
+| E01 | `raw/ARCH-01_v1.md` 2절 | pay가 ledger를 호출하는 방향 |
+| E02 | `raw/ARCH-01_v1.md` 3절 | pay 운영 담당 팀 |
+| E03 | `raw/ARCH-01_v1.md` 1·2절 | shop에서 ledger까지 직접 호출인지 여러 단계인지 |
+| E04 | `raw/ARCH-01_v2.md` 1·2절 | 검토안의 승인·배포 여부 |
+| E05 | `raw/GLOSS-01_v1.md` 1절 | ledger-db의 유형 |
+| E06 | `raw/GLOSS-01_v1.md` 1절 | payment가 pay의 별칭인지 |
 
 ## 2. 판정 기록
 

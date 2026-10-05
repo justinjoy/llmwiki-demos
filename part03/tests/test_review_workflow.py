@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import sqlite3
 import sys
+import subprocess
 import tempfile
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -24,6 +25,19 @@ class ReviewTests(unittest.TestCase):
             if r['status']!='pending':continue
             status='approved' if r['kind']=='assertion' else 'held' if r['id']=='E04' else 'rejected'
             self.store.decide(r['id'],r['revision'],status,'테스트 검토자','원문 확인을 가정한 테스트 판정')
+    def test_cli_show_selects_same_store_as_csv(self):
+        original=json.loads(self.row('F03')['payload'])
+        self.store.revise('F03',1,'테스트','별도 폴더 후보 구분',dict(original,subject='ledger',object='pay'))
+        before=self.store.sheet.read_bytes()
+        result=subprocess.run([sys.executable,str(ROOT/'review_workflow.py'),'--root',str(self.root),'show','F03'],capture_output=True,text=True,check=True)
+        shown=json.loads(result.stdout)
+        with self.store.sheet.open() as f:
+            csv_row=next(r for r in csv.DictReader(f) if r['id']=='F03')
+        self.assertEqual(str(shown['revision']),csv_row['revision'])
+        self.assertEqual(shown['content_sha'],csv_row['content_sha256'])
+        self.assertEqual(shown['payload']['subject'],'ledger')
+        self.assertEqual(self.store.sheet.read_bytes(),before)
+
     def test_initial_pending_and_versioned_csv(self):
         self.assertTrue(all(r['status']=='pending' and r['revision']==1 for r in self.store.current()))
         with self.store.sheet.open() as f:self.assertEqual(next(csv.reader(f)),FIELDS)
