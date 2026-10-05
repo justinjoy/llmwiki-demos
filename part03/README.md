@@ -2,7 +2,7 @@
 
 [최종 슬라이드](../../slides/part03.pptx) · [전체 슬라이드 안내](../../slides/README.md)
 
-업무 원문에서 직접 호출 후보·별칭·개체를 추출하고, 사람이 검토한 사실을 다음 교시 입력으로 분리합니다. PPT 10번의 실습 A와 12번의 실습 B에 대응합니다.
+업무 원문에서 직접 호출 후보·별칭·개체를 추출하고, 사람이 검토한 사실을 다음 교시 입력으로 분리합니다. PPT 11번의 실습 A와 13번의 실습 B에 대응합니다.
 
 Python 3.9 이상과 로그인된 LLM CLI가 필요합니다. Wirelog 설치 없이 이 폴더만으로 실행할 수 있습니다. 2교시 타입·관계 사전의 복사본을 `ontology/`에 보관하고 모든 LLM 단계의 입력에 포함합니다. `svc:` 접두사는 3교시 슬라이드의 표준 ID에 맞춰 제외합니다.
 
@@ -11,7 +11,7 @@ Python 3.9 이상과 로그인된 LLM CLI가 필요합니다. Wirelog 설치 없
 프로젝트 루트의 터미널에서 실행합니다.
 
 ```sh
-cd demos/part03
+cd ~/git/llmwiki-demos/part03
 python3 run_lesson3.py --cli agy --task extract --overwrite
 python3 validate_assertions.py assertions.jsonl --status pending
 ```
@@ -19,6 +19,24 @@ python3 validate_assertions.py assertions.jsonl --status pending
 `--dry-run`은 실제 프롬프트와 원문을 `runs/`에 만들고 LLM은 호출하지 않습니다. 실제 실행은 원문 5개·온톨로지 사전과 `prompt.txt`를 `agy -p`로 전달하고 응답을 `assertions.jsonl`에 저장합니다. 기존 내용은 실행 기록의 `previous.jsonl`에 백업합니다.
 
 검사에서 오류가 나오면 원문과 대조해 후보 파일을 수정한 뒤 다시 검사합니다. 배포된 TODO 템플릿과 빈 `approved.jsonl`이 검사에 실패하는 것은 정상입니다.
+
+## review.csv를 직접 수정하고 반영하는 실습
+
+LLM 호출 없이 별도 실습 폴더에서 CSV 편집을 연습하려면 다음 명령을 실행합니다.
+
+```sh
+python3 review_walkthrough.py --interactive
+```
+
+1. 화면에 표시된 **절대 경로의 `review.csv`**를 편집기로 엽니다. 원래 `part03/review.csv`와 다른 파일입니다.
+2. 첫 단계에서는 방향 오류를 넣은 F03 r2의 `판정`을 `rejected`로 바꾸고 `근거 또는 이유`, `검토자`를 입력합니다. 나머지 행은 그대로 둡니다. `id`, `revision`, `content_sha256`은 변경하지 않습니다.
+3. 파일을 저장하고 터미널에서 Enter를 누릅니다. 시연은 `import-review`와 같은 `Store.import_csv()` 경로로 **저장한 CSV를 읽어** DB와 이력에 반영합니다. 오류가 있으면 저장하지 않고 재편집을 기다립니다.
+4. 시연이 후보를 pay → ledger로 교정하면 F03 r3가 `pending`이 됩니다. 편집기에서 새 `review.csv`를 다시 열고, 화면에 안내된 최신 버전의 승인·보류·반려 판정과 이유·검토자를 입력합니다.
+5. 저장 후 Enter를 누르면 CSV를 다시 반영하고 결과를 내보냅니다. 승인 3개·보류 1개·반려 5개와 F03의 반려 → 수정 → 승인 이력을 확인합니다.
+
+각 단계의 `01-reject-before.csv`, `01-reject-edited.csv`, `02-rereview-before.csv`, `02-rereview-edited.csv`로 편집 전후를 비교할 수 있습니다. `review_history.json`에는 반영된 판정과 수정 이력이 남습니다. 실습 도중 `q`로 종료하면 작업 파일은 보존합니다. 이 모드는 교육용 오류 사례를 사용하며 원래 후보와 검토 DB는 변경하지 않습니다.
+
+`--interactive`를 빼면 같은 CSV 편집·반영 과정을 교육용 판정으로 자동 시연합니다.
 
 ## CLI 선택
 
@@ -111,7 +129,19 @@ python3 validate_assertions.py approved.jsonl --status approved
 python3 run_lesson3.py --cli agy --task all --overwrite
 ```
 
-네 번의 LLM 호출로 추출 → 별칭 → 개체 → 검토 제안을 순서대로 생성합니다. 검토 저장소가 있으면 변경된 추출 후보를 새 pending 버전으로 등록하고 검토 CSV를 갱신하며 기존 승인 파일을 무효화합니다. 변경이 없는 재추출은 사람의 수정 버전을 덮어쓰지 않습니다. 이후 최신 버전을 검토하고 별도 내보내기 명령을 실행합니다.
+네 번의 LLM 호출로 추출 → 별칭 → 개체 → 검토 제안을 순서대로 생성합니다. 검토 저장소가 있으면 변경된 추출 후보를 새 pending 버전으로 등록하고 검토 CSV를 갱신하며 기존 승인 파일을 무효화합니다. 변경이 없는 재추출은 사람의 수정 버전을 덮어쓰지 않습니다. 전체 생성이 성공하면 검토 저장소가 없는 경우 초기화하고 `review.csv`의 절대 경로와 아래 후속 명령을 안내합니다.
+
+`review.csv`를 편집·저장한 뒤 다음 명령으로 실제 판정을 반영하고 확인합니다. 일부만 검토했다면 나머지 행은 `pending`, 이유·검토자는 빈 값으로 둡니다.
+
+```sh
+python3 review_workflow.py import-review
+python3 review_workflow.py list
+python3 review_workflow.py history F03
+# 모든 후보의 최신 버전을 검토한 뒤 실행
+python3 export_review.py --overwrite
+```
+
+CSV 저장만으로 판정이 반영되지는 않습니다. `import-review`가 DB와 이력에 저장하고, `export_review.py`가 최신 승인·보류·반려 파일을 내보냅니다.
 
 중간 오류나 선행 입력의 TODO가 발견되면 중단합니다. 이미 성공한 파일과 기록은 남으므로 실패한 단계부터 다시 실행할 수 있습니다.
 
@@ -125,9 +155,9 @@ python3 run_prompt.py --cli agy -p prompt.txt -c raw/ARCH-01_v1.md -c raw/ADR-07
 
 입력은 `runs/날짜-고유번호/input.txt`, 응답은 `stdout.txt`, 오류는 `stderr.txt`, 실행 상태는 `run.json`에 기록합니다. CLI 실패·빈 응답·시간 초과 시 기존 결과를 교체하지 않습니다. 기본 제한은 호출당 300초이며 `--timeout 600`처럼 바꿀 수 있습니다.
 
-## 제출
+## 확인할 산출물
 
-후보·별칭·개체, LLM 검토 제안, 사람이 작성한 검토 CSV·기록, 승인·보류·반려 결과와 실행 기록을 제출합니다. `review.example.csv`는 최종 교육자료를 바탕으로 한 강사 시연용 판정 예시입니다. 원문은 실무 문서 형식을 재현한 교육용 합성 사례입니다.
+후보·별칭·개체, LLM 검토 제안, 사람이 작성한 검토 CSV·기록, 승인·보류·반려 결과와 실행 기록을 확인합니다. `review.example.csv`는 최종 교육자료를 바탕으로 한 강사 시연용 판정 예시입니다. 원문은 실무 문서 형식을 재현한 교육용 합성 사례입니다.
 
 ```sh
 python3 check_links.py .
@@ -150,7 +180,7 @@ python3 validate_assertions.py example_output/approved.jsonl --status approved
 
 단계마다 JSON 구조·문서 번호·버전·절·정확한 인용을 검사하고 오류 시 중단합니다. 수정 후 해당 단계부터 다시 실행하세요. `--dry-run`은 선택적인 프롬프트 점검 용도이며 실제 실행을 대신하지 않습니다.
 
-## 확인 문제 · 슬라이드 15~16
+## 확인 문제 · 슬라이드 16~17
 
 LLM 신뢰도만으로 원문에 없는 관계를 채택하지 않습니다. 한 출처가 철회되어도 다른 유효한 출처가 같은 관계를 지지하면 관계를 유지할 수 있으므로 근거를 출처별로 보관합니다.
 

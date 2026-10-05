@@ -109,6 +109,17 @@ def main():
                         if changed:
                             print("새 후보 버전(pending): " + ", ".join(changed), flush=True)
                 print(f"검사 통과: {output}", flush=True)
+        if not args.dry_run and args.task == "all":
+            from review_workflow import Store
+            store = Store(LESSON)
+            store.init()
+            print(f"\n다음 단계: {store.sheet}를 편집·저장하세요.", flush=True)
+            print("id·revision·content_sha256은 유지하고 판정·근거 또는 이유·검토자를 작성합니다.")
+            print("판정 반영: python3 review_workflow.py import-review")
+            print("반영 확인: python3 review_workflow.py list")
+            print("이력 확인: python3 review_workflow.py history F03")
+            print("모든 후보 검토 후: python3 export_review.py --overwrite")
+            print("별도 폴더에서 CSV 편집 연습: python3 review_walkthrough.py --interactive")
         if args.dry_run and args.task == "all":
             print("전체 미리보기는 현재 파일을 사용합니다. 실제 순차 실행에서는 앞 단계의 생성 결과를 다음 입력에 포함합니다.")
         return 0
