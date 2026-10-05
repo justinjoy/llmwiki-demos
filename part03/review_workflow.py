@@ -54,6 +54,23 @@ def validate_candidate(root,ident,kind,payload):
     else:raise ValueError('kind는 assertion 또는 error_example입니다.')
     return payload
 
+def suggested_reason(kind,payload):
+    """Reading aid only; never records a human decision."""
+    if kind=='assertion':
+        return (f"{payload.get('source_id','')} {payload.get('version','')} {payload.get('section','')}: "
+                f"원문 인용: {payload.get('quote','')} / "
+                f"검토할 후보: {payload.get('subject','')} {payload.get('predicate','')} {payload.get('object','')}. "
+                "방향·범위·문서 적용 상태를 대조하세요.")
+    references={
+        'ledger depends_on pay':'ARCH-01 v1 §2: 원문은 pay가 ledger를 호출한다고 설명합니다. 후보의 호출 방향을 대조하세요.',
+        'pay 담당 팀 Platform':'ARCH-01 v1 §3: pay 운영 담당은 결제정산팀입니다. 후보의 담당 팀을 대조하세요.',
+        'shop depends_on ledger 직접 호출':'ARCH-01 v1 §1·§2: shop → order → pay → ledger 경로입니다. 직접 호출인지 간접 경로인지 구분하세요.',
+        'pay 원장 호출 제거 완료':'ARCH-01 v2 §1·§2: 검토 중인 설계안이며 운영 반영을 확정하지 않았습니다. 승인·배포 여부를 확인하세요.',
+        'ledger-db = ledger Service':'GLOSS-01 v1 §1: ledger-db는 DataStore입니다. ledger 서비스와 유형을 구분하세요.',
+        'payment와 pay 별도 서비스':'GLOSS-01 v1 §1: payment는 pay의 별칭입니다. 별개 서비스인지 대조하세요.',
+    }
+    return references.get(payload.get('claim'),'수정된 예문입니다. 원문 위치와 현재 주장에 맞는 판단 근거를 작성하세요.')
+
 class Store:
     def __init__(self,root=ROOT,example=False):
         self.root=Path(root).resolve();self.output=self.root/'example_output' if example else self.root
@@ -128,10 +145,21 @@ class Store:
         sources=self.sources();heads={r['id']:r for r in con.execute('SELECT * FROM heads')}
         if set(heads)!=set(sources) or any(heads[i]['source_sha']!=digest(p) for i,(_,p) in sources.items()):
             raise ValueError('추출 파일이 검토 기준과 달라졌습니다. review_workflow.py sync --actor 이름 --reason 이유 를 실행하세요.')
-    def worksheet(self):
+    def worksheet(self,drafts=None):
         # Review CSV is a working copy, never the historical system of record.
+        previous={}
+        if self.sheet.exists():
+            with self.sheet.open(encoding='utf-8-sig',newline='') as f:
+                reader=csv.DictReader(f)
+                if reader.fieldnames==FIELDS:
+                    previous={(r['id'],r['revision'],r['content_sha256']):r.get('근거 또는 이유','') for r in reader}
+        previous.update(drafts or {})
         buf=io.StringIO(newline='');writer=csv.writer(buf,lineterminator="\n");writer.writerow(FIELDS)
-        for r in self.current():writer.writerow([r['id'],r['revision'],r['content_sha'],r['status'],r['review_reason'],r['reviewer']])
+        for r in self.current():
+            reason=r['review_reason']
+            if r['status']=='pending':
+                reason=previous.get((r['id'],str(r['revision']),r['content_sha'])) or suggested_reason(r['kind'],json.loads(r['payload']))
+            writer.writerow([r['id'],r['revision'],r['content_sha'],r['status'],reason,r['reviewer']])
         text=buf.getvalue()
         if self.sheet.exists() and self.sheet.read_text(encoding='utf-8-sig')!=text:
             folder=self.output/'.review/backups';folder.mkdir(parents=True,exist_ok=True)
@@ -178,7 +206,7 @@ class Store:
     def apply(self,reviews):
         with self.connect() as con:
             con.execute('BEGIN IMMEDIATE');self.check_sources(con)
-            current={r['id']:r for r in self.rows(con)};seen=set();planned=[]
+            current={r['id']:r for r in self.rows(con)};seen=set();planned=[];drafts={}
             for review in reviews:
                 ident=review['id'];status=review['판정']
                 if ident in seen or ident not in current:raise ValueError('중복 또는 알 수 없는 ID: '+ident)
@@ -188,7 +216,8 @@ class Store:
                 reviewer=review['검토자'].strip();reason=review['근거 또는 이유'].strip()
                 if status=='pending':
                     if r['status']!='pending':raise ValueError(f'{ident}: 기존 판정을 지우려면 reopen이 필요합니다.')
-                    if reviewer or reason:raise ValueError(f'{ident}: pending에는 판정자·판정 이유를 비워 두세요.')
+                    if reviewer:raise ValueError(f'{ident}: pending에는 검토자를 비워 두세요. 근거 초안은 남겨도 됩니다.')
+                    drafts[(ident,str(r['revision']),r['content_sha'])]=reason
                     continue
                 reviewer=required(reviewer,'검토자');reason=required(reason,'판정 근거')
                 if r['status']!='pending':
@@ -201,7 +230,7 @@ class Store:
                 planned.append((ident,r['revision'],status,reviewer,reason,stamp()))
             if planned:self.invalidate('검토 판정 변경. 최신 결과를 다시 내보내세요.')
             con.executemany('INSERT INTO decisions VALUES(?,?,?,?,?,?)',planned)
-        self.worksheet();return len(planned)
+        self.worksheet(drafts);return len(planned)
     def import_csv(self,path=None):
         with Path(path or self.sheet).open(encoding='utf-8-sig',newline='') as f:
             reader=csv.DictReader(f)

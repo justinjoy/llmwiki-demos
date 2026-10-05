@@ -38,6 +38,25 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(shown['payload']['subject'],'ledger')
         self.assertEqual(self.store.sheet.read_bytes(),before)
 
+    def test_prefilled_reasons_allow_partial_import_without_false_decisions(self):
+        with self.store.sheet.open() as f:rows=list(csv.DictReader(f))
+        self.assertTrue(all(r['근거 또는 이유'] and r['판정']=='pending' and not r['검토자'] for r in rows))
+        for r in rows:
+            if r['id']=='F01':r.update(판정='approved',검토자='실제 검토자')
+            if r['id']=='E02':r['근거 또는 이유']='검토자가 작성 중인 근거 초안'
+        self.assertEqual(self.store.apply(rows),1)
+        self.assertEqual(self.row('F01')['status'],'approved')
+        self.assertEqual(self.row('E02')['review_reason'],'')
+        self.assertIsNone(self.store.history('E02')[0]['status'])
+        with self.store.sheet.open() as f:saved={r['id']:r for r in csv.DictReader(f)}
+        self.assertEqual(saved['E02']['근거 또는 이유'],'검토자가 작성 중인 근거 초안')
+        original=json.loads(self.row('E02')['payload'])
+        self.store.revise('E02',1,'수정자','새 주장',dict(original,claim='새로운 주장'))
+        with self.store.sheet.open() as f:updated={r['id']:r for r in csv.DictReader(f)}
+        self.assertNotEqual(updated['E02']['근거 또는 이유'],'검토자가 작성 중인 근거 초안')
+        self.assertIn('수정된 예문',updated['E02']['근거 또는 이유'])
+        with self.assertRaises(ValueError):self.store.export(True)
+
     def test_initial_pending_and_versioned_csv(self):
         self.assertTrue(all(r['status']=='pending' and r['revision']==1 for r in self.store.current()))
         with self.store.sheet.open() as f:self.assertEqual(next(csv.reader(f)),FIELDS)

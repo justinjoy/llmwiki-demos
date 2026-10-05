@@ -96,9 +96,12 @@ python3 review_workflow.py --root "runs/review-walkthrough-실제폴더명" show
 
 ## 2. 판정 기록
 
+`review.csv`의 **근거 또는 이유**는 미리 채워집니다. F 후보에는 현재 후보의 원문 위치·인용과 대조할 관계, E 예문에는 원문 위치와 검토할 사항을 제공합니다. 이것은 검토 참고용 초안이며 실제 판정이 아닙니다. 원문을 확인하고 필요하면 이유를 고친 뒤 판정과 본인 이름을 입력하세요. 같은 후보 버전에서 작성한 근거는 유지하며, 후보가 새 버전으로 바뀌면 새 내용에 맞춰 참고 근거를 다시 만듭니다. `list`는 반영된 판정 이유만 표시하므로 pending 행의 CSV 초안은 표시하지 않습니다.
+
+
 다음 둘 중 한 방식을 선택합니다. 명령의 검토자·이유는 본인이 실제 확인한 값으로 입력하세요.
 
-**CSV 방식:** `review.csv`의 ID·revision·content_sha256은 그대로 두고 판정·이유·검토자를 작성합니다. 일부만 검토했으면 나머지는 `pending`과 빈 이유·검토자로 남깁니다.
+**CSV 방식:** `review.csv`의 ID·revision·content_sha256은 그대로 두고 판정·이유·검토자를 작성합니다. 일부만 검토했으면 나머지는 `pending`과 빈 검토자로 남깁니다. 미리 채운 근거는 유지해도 됩니다.
 
 ```sh
 python3 review_workflow.py import-review
