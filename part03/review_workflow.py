@@ -286,7 +286,11 @@ def main():
     try:
         if args.command=='init':print('등록 완료. review.csv에 최신 버전의 판정을 기록하세요.' if store.init() else '이미 초기화됐습니다. 기존 후보와 이력을 유지합니다.')
         elif args.command=='list':
+            print('후보ID', '후보버전', '후보종류', '검토상태', '검토자', '판정이유', sep='\t')
             for r in store.current():print(r['id'],f"r{r['revision']}",r['kind'],r['status'],r['reviewer'],r['review_reason'],sep='\t')
+            print('rN=후보의 수정 버전 (원문 v1/v2와 별개). assertion=구조화된 사실 후보, error_example=교육용 오류 검토 예문.')
+            print('pending=미검토, approved=승인, rejected=반려, held=보류. 빈 검토자·이유는 아직 판정하지 않았다는 뜻입니다.')
+            print('내용 조회: show F03 / 변경 이력: history F03 (같은 --root 옵션을 유지하세요).')
         elif args.command=='worksheet':print(store.worksheet())
         elif args.command=='sync':print('새 버전:',store.sync(args.actor,args.reason))
         elif args.command=='show':

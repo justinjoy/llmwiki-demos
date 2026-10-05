@@ -2,7 +2,7 @@
 
 [데모에 맞춘 배포 슬라이드](../../day1company/biz-hanhwa/slides/part03.pptx)
 
-기준: biz-hanhwa/slides/part03.pptx의 23장과 발표자 노트. 10페이지는 생성 파일 안내, 14~15페이지는 후보 조회·원문 대조, 16~17페이지는 CSV 편집·반영·재검토 상세 절차입니다.
+기준: biz-hanhwa/slides/part03.pptx의 25장과 발표자 노트. 10페이지는 생성 파일 안내, 14페이지는 list 출력 해설, 15~16페이지는 후보 조회·원문 대조, 17~19페이지는 CSV 편집·F 후보 승인·재검토 상세 절차입니다.
 
 | 슬라이드 | 제목 | 실습 자료와 확인할 작업 |
 | --- | --- | --- |
@@ -19,13 +19,15 @@
 | 11 | 실습 A: 사실 후보와 속성 추출 | 실습 A: assertions.jsonl, aliases.json, entities.json, review_suggestions.md |
 | 12 | 실습 A 확인: 승인 집합 | S1 직접 관계 3개·별칭 대조 |
 | 13 | 실습 B: CSV 판정 반영과 재검토 | 실습 B: REVIEW_WORKFLOW.md, 버전별 review.csv, revise/reopen, approved.jsonl, held.json, rejected.json |
-| 14 | 후보 내용과 원문은 어디서 볼까요? | show F03의 payload, CSV 버전·해시 비교, raw/ARCH-01_v1.md 2절 대조 |
-| 15 | E01~E06은 무엇과 비교하나요? | show E01의 payload.claim, 후보별 원문 파일·절과 판단 기준 |
-| 16 | 편집할 CSV와 바꿀 세 칸 | 실제 후보·격리 시연의 CSV 경로, 유지할 3개 열과 편집할 3개 열, F03 r2 반려 입력 예 |
-| 17 | CSV 반영부터 수정·재검토까지 | import-review/list, show/revise, 새 CSV 재검토, history, export_review.py 명령 |
-| 18 | 실습 B 확인: 판정과 수정 이력 | 실습 B 결과·원문 근거 대조, review_history.json의 반려→수정→재검토 이력 |
-| 19 | 추출 품질 점검 | 구조·의미·오류 처리 및 링크 확인 |
-| 20 | 확인 문제 | README.md 확인 문제·원문 근거 설명 |
-| 21 | 확인 문제 해설 | README.md 확인 문제·원문 근거 설명 |
-| 22 | 이번 시간의 산출물 | 최신 승인 파일·메타데이터, review_history.json·검토 DB 보관 |
-| 23 | LLMWiki와 Wirelog 실습 과정 | 실제 결과·검토 기록·다음 교시 입력 확인 |
+| 14 | list 출력은 후보의 검토 현황입니다 | ID·후보 버전·종류·상태·검토자·이유 해설, show/history 조회 |
+| 15 | 후보 내용과 원문은 어디서 볼까요? | show F03의 payload, CSV 버전·해시 비교, raw/ARCH-01_v1.md 2절 대조 |
+| 16 | E01~E06은 무엇과 비교하나요? | show E01의 payload.claim, 후보별 원문 파일·절과 판단 기준 |
+| 17 | 편집할 CSV와 바꿀 세 칸 | 실제 후보·격리 시연의 CSV 경로, 유지할 3개 열과 편집할 3개 열, F03 r2 반려 입력 예 |
+| 18 | F01~F03을 승인하려면 | approved·이유·본인 이름 입력, import-review/list, 부분 승인과 전체 내보내기 구분 |
+| 19 | CSV 반영부터 수정·재검토까지 | import-review/list, show/revise, 새 CSV 재검토, history, export_review.py 명령 |
+| 20 | 실습 B 확인: 판정과 수정 이력 | 실습 B 결과·원문 근거 대조, review_history.json의 반려→수정→재검토 이력 |
+| 21 | 추출 품질 점검 | 구조·의미·오류 처리 및 링크 확인 |
+| 22 | 확인 문제 | README.md 확인 문제·원문 근거 설명 |
+| 23 | 확인 문제 해설 | README.md 확인 문제·원문 근거 설명 |
+| 24 | 이번 시간의 산출물 | 최신 승인 파일·메타데이터, review_history.json·검토 DB 보관 |
+| 25 | LLMWiki와 Wirelog 실습 과정 | 실제 결과·검토 기록·다음 교시 입력 확인 |

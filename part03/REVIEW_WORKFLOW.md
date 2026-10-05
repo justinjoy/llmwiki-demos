@@ -30,6 +30,23 @@ python3 review_workflow.py list
 python3 review_workflow.py show F03
 ```
 
+### list 출력은 무엇인가
+
+`list`는 최신 후보의 목록과 검토 상태를 보여 줍니다. 열 순서는 **후보ID / 후보버전 / 후보종류 / 검토상태 / 검토자 / 판정이유**입니다.
+
+| 출력 | 의미 |
+| --- | --- |
+| `E01` 또는 `F03` | 후보 식별자. 같은 ID로 `show`와 `history`를 조회합니다. |
+| `r1`, `r2` | 후보의 첫 번째·두 번째 버전. 수정·재추출 변경·재검토 요청으로 증가합니다. 원문 문서의 `v1`, `v2`와 별개입니다. |
+| `error_example` | 잘못된 주장이나 보류할 주장을 찾는 강사가 미리 작성한 교육용 검토 예문. LLM 추출 결과나 프로그램 실행 오류가 아닙니다. |
+| `assertion` | 주어·관계·목적어와 출처가 담긴 구조화된 사실 후보. 아직 사실로 승인됐다는 뜻은 아닙니다. |
+| `pending` | 이 후보 버전을 아직 판정하지 않았습니다. |
+| 빈 검토자·판정이유 | 아직 판정을 기록하지 않았으므로 비어 있습니다. |
+
+따라서 `F03 r2 assertion pending`은 **“F03의 두 번째 버전인 구조화된 사실 후보가 검토를 기다린다”**는 뜻입니다. `E01 r1 error_example pending`은 **“E01 교육용 예문의 첫 번째 버전이 검토를 기다린다”**는 뜻입니다. 제시된 목록은 9개 후보가 모두 미검토 상태입니다.
+
+후보 내용은 `python3 review_workflow.py show F03`, r2가 된 이유는 `python3 review_workflow.py history F03`으로 확인합니다. `r2`만 보고 수정 원인을 단정하지 않습니다. 판정이 반영되면 상태는 `approved`(승인), `rejected`(반려), `held`(보류)로 표시되고 검토자·이유가 채워집니다.
+
 ### 후보 내용은 어디서 보는가
 
 CSV는 판정 입력표입니다. 후보 내용은 위 `show F03` 명령의 **터미널 출력에서 `payload`**를 펼쳐 읽습니다. 편집기에서 읽으려면 아래처럼 JSON 파일로 저장한 뒤 `candidate-F03.json`을 엽니다. 이 파일은 열람용 복사본이며 원문이나 검토 상태를 바꾸지 않습니다.
@@ -86,6 +103,16 @@ python3 review_workflow.py --root "runs/review-walkthrough-실제폴더명" show
 ```sh
 python3 review_workflow.py import-review
 ```
+
+**F01~F03 승인 예:** 현재 후보를 원문과 대조한 뒤 아래와 같이 마지막 세 열을 작성합니다. 앞의 ID·버전·해시는 그대로 유지합니다.
+
+| ID | 판정 | 근거 또는 이유 예시 | 검토자 |
+| --- | --- | --- | --- |
+| F01 | approved | ARCH-01 v1 §1: shop이 order를 직접 호출함을 확인 | 본인 이름 |
+| F02 | approved | ARCH-01 v1 §1: order가 pay를 직접 호출함을 확인 | 본인 이름 |
+| F03 | approved | ARCH-01 v1 §2: pay가 ledger를 직접 호출함을 확인 | 본인 이름 |
+
+승인 값은 `accept`가 아니라 `approved`입니다. 저장 후 `python3 review_workflow.py import-review`, 이어서 `python3 review_workflow.py list`를 실행해 승인·검토자·이유를 확인합니다. E01~E06을 `pending`으로 두어도 F 후보 승인은 가능합니다. `approved.jsonl` 내보내기는 E 후보까지 모두 검토한 뒤 가능합니다.
 
 **후보별 명령:** 현재 `list`에서 확인한 버전을 지정합니다.
 
