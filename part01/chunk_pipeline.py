@@ -197,19 +197,26 @@ def execute(args, budget=None):
             'source_count': len(sources),
             'selected_source_count': len({e['source']['path'] for e in evidence})}
 
+    def show_chunk(index, chunk, action):
+        print(f'[청크 {index}/{len(chunks)}] {action}: '
+              f'{chunk["path"]} · {chunk["section"] or "제목 없음"} '
+              f'(원문 {chunk["line_start"]}~{chunk["line_end"]}행)', flush=True)
+
     try:
         print(f'청크 {len(chunks)}개 / 실행 기록: {run}', flush=True)
         # Preflight every map before any billed call.
         for i, chunk in enumerate(chunks):
             stage_files('map', MAP, chunk, i)
         if args.dry_run:
-            for chunk in chunks:
+            for index, chunk in enumerate(chunks, start=1):
+                show_chunk(index, chunk, '입력 준비')
                 call('map', MAP, chunk, dry=True)
             record('dry_run')
             print('청크별 실제 입력을 만들었습니다. 근거 선택·최종 입력은 LLM 응답 후 구성합니다.')
             return 0
         all_evidence = []
-        for chunk in chunks:
+        for index, chunk in enumerate(chunks, start=1):
+            show_chunk(index, chunk, '읽는 중')
             response = json.loads(call('map', MAP, chunk))
             items = response.get('evidence') if isinstance(response, dict) else None
             if not isinstance(items, list) or len(items) > 6:
@@ -224,9 +231,13 @@ def execute(args, budget=None):
                     raise ValueError('finding은 비어 있지 않은 300자 이하 문자열이어야 합니다.')
                 all_evidence.append({'id': f'e{len(all_evidence)+1:06}', **item,
                     'source': {k: v for k, v in chunk.items() if k != 'content'}})
+            print(f'[청크 {index}/{len(chunks)}] 완료 · 근거 {len(items)}개', flush=True)
+        print(f'청크 읽기 완료: {len(chunks)}/{len(chunks)}개', flush=True)
         (run / 'evidence.json').write_text(json.dumps(all_evidence, ensure_ascii=False, indent=2), encoding='utf-8')
         evidence = list(all_evidence)
+        reduction_round = 0
         while not fits(FINAL, final_payload(evidence)):
+            reduction_round += 1
             if len(evidence) < 2:
                 raise ValueError('단일 근거와 과제가 최종 입력 한도를 넘습니다.')
             batches, batch = [], []
@@ -244,9 +255,11 @@ def execute(args, budget=None):
             if batch:
                 batches.append(batch)
             retained = []
-            for batch in batches:
+            for batch_index, batch in enumerate(batches, start=1):
                 if len(batch) == 1:
                     retained.extend(batch); continue
+                print(f'[근거 선택 {reduction_round}회차 · 묶음 {batch_index}/{len(batches)}] '
+                      f'근거 {len(batch)}개 검토 중', flush=True)
                 target = sum(len(encoded(e)) for e in batch) // 2
                 response = json.loads(call('reduce', REDUCE, {'items': [{**e, 'cost': len(encoded(e))} for e in batch], 'target_cost': target}))
                 keep = response.get('keep') if isinstance(response, dict) else None
@@ -264,6 +277,7 @@ def execute(args, budget=None):
             record('running')
         meta.update(selected_ids=[e['id'] for e in evidence], omitted_ids=[e['id'] for e in all_evidence if e not in evidence],
             no_findings_chunk_ids=[c['id'] for c in chunks if not any(e['source']['id'] == c['id'] for e in all_evidence)])
+        print(f'[최종 작성] 근거 {len(evidence)}개로 {output.name} 작성 중', flush=True)
         result = call('final', FINAL, final_payload(evidence)) + '\n'
         validate_final(result, output, sources, root)
         notice = f'LLM 초안 · 사람 검토 전. 청크 {len(chunks)}개에서 근거 {len(all_evidence)}개 추출, 최종 사용 {len(evidence)}개, 크기 제한으로 제외 {len(all_evidence)-len(evidence)}개. 전체 근거와 선택 기록: {run / "manifest.json"}'
