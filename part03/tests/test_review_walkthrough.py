@@ -76,6 +76,7 @@ class CsvWalkthroughTests(unittest.TestCase):
                 self.assertEqual(run_lesson3.main(), 0)
             self.assertEqual(execute.call_count, 4)
             store.init.assert_called_once_with()
+            store.prefill_reasons.assert_called_once_with()
             self.assertIn(str(store.sheet), output.getvalue())
             self.assertIn('review_workflow.py import-review', output.getvalue())
             self.assertIn('review_walkthrough.py --interactive', output.getvalue())

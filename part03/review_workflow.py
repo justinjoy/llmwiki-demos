@@ -167,6 +167,24 @@ class Store:
         atomic(self.sheet,text)
         atomic(self.output/'review_history.json',json.dumps(self.history(),ensure_ascii=False,indent=2)+'\n')
         return self.sheet
+    def prefill_reasons(self):
+        """Fill only empty evidence cells without discarding unsaved CSV decisions."""
+        if not self.sheet.exists():return self.worksheet()
+        with self.sheet.open(encoding='utf-8-sig',newline='') as f:
+            reader=csv.DictReader(f)
+            if reader.fieldnames!=FIELDS:raise ValueError('현재 버전의 review.csv가 필요합니다.')
+            rows=list(reader)
+        current={r['id']:r for r in self.current()}
+        for row in rows:
+            r=current.get(row['id'])
+            if not r or row['revision']!=str(r['revision']) or row['content_sha256']!=r['content_sha']:
+                raise ValueError('review.csv의 후보 버전이 다릅니다. 편집 내용을 보관하고 최신 후보를 확인하세요.')
+            if not row['근거 또는 이유'].strip():
+                row['근거 또는 이유']=r['review_reason'] or suggested_reason(r['kind'],json.loads(r['payload']))
+        buf=io.StringIO(newline='');writer=csv.DictWriter(buf,fieldnames=FIELDS,lineterminator='\n')
+        writer.writeheader();writer.writerows(rows);atomic(self.sheet,buf.getvalue())
+        return self.sheet
+
     def revise(self,ident,expected,actor,reason,payload=None,kind=None,reopen=False):
         actor=required(actor,'수정자');reason=required(reason,'수정·재검토 이유')
         with self.connect() as con:

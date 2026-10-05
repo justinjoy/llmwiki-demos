@@ -109,12 +109,13 @@ def main():
                         if changed:
                             print("새 후보 버전(pending): " + ", ".join(changed), flush=True)
                 print(f"검사 통과: {output}", flush=True)
-        if not args.dry_run and args.task == "all":
+        if not args.dry_run and args.task in ("all", "extract"):
             from review_workflow import Store
             store = Store(LESSON)
             store.init()
+            store.prefill_reasons()
             print(f"\n다음 단계: {store.sheet}를 편집·저장하세요.", flush=True)
-            print("id·revision·content_sha256은 유지하고 판정·근거 또는 이유·검토자를 작성합니다.")
+            print("id·revision·content_sha256은 유지하고 미리 채운 근거를 확인·수정한 뒤 판정·검토자를 작성합니다.")
             print("판정 반영: python3 review_workflow.py import-review")
             print("반영 확인: python3 review_workflow.py list")
             print("이력 확인: python3 review_workflow.py history F03")

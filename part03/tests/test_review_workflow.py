@@ -57,6 +57,18 @@ class ReviewTests(unittest.TestCase):
         self.assertIn('수정된 예문',updated['E02']['근거 또는 이유'])
         with self.assertRaises(ValueError):self.store.export(True)
 
+    def test_prefill_keeps_unsaved_decision_and_user_reason(self):
+        with self.store.sheet.open() as f:rows=list(csv.DictReader(f))
+        rows[0].update(판정='rejected',검토자='작성 중인 검토자',**{'근거 또는 이유':'직접 작성한 이유'})
+        rows[-1]['근거 또는 이유']=''
+        with self.store.sheet.open('w',newline='') as f:
+            w=csv.DictWriter(f,fieldnames=FIELDS);w.writeheader();w.writerows(rows)
+        self.store.prefill_reasons()
+        with self.store.sheet.open() as f:result=list(csv.DictReader(f))
+        self.assertEqual(result[0],rows[0])
+        self.assertTrue(result[-1]['근거 또는 이유'])
+        self.assertTrue(all(r['status']=='pending' for r in self.store.current()))
+
     def test_initial_pending_and_versioned_csv(self):
         self.assertTrue(all(r['status']=='pending' and r['revision']==1 for r in self.store.current()))
         with self.store.sheet.open() as f:self.assertEqual(next(csv.reader(f)),FIELDS)
