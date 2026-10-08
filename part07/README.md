@@ -6,14 +6,14 @@
 
 ## 바로 실행
 
-프로젝트 루트에서 `python3 -m pip install -r demos/requirements.txt`와 `python3 demos/setup_pyrewire.py`로 PyreWire 1.1.2를 준비한 뒤 실행합니다.
+프로젝트 루트에서 `python3 -m pip install -r demos/requirements.txt`와 `python3 demos/setup_pyrewire.py`로 PyreWire 1.1.2 이상을 준비한 뒤 실행합니다.
 
 ```sh
 cd demos/part07
 python3 run_lesson7.py --cli agy --task all --overwrite
 ```
 
-CPython 3.11~3.14와 `pyrewire==1.1.2`를 사용합니다. 엔진은 `EasySession.snapshot()`을 직접 호출합니다. 6~8교시의 `--cli`는 LLM 실행 파일(`agy`, `claude`, `codex`, `cursor-agent`, `copilot`)만 선택합니다.
+CPython 3.11~3.14와 `pyrewire>=1.1.2`를 사용합니다. 엔진은 `EasySession.snapshot()`을 직접 호출합니다. 6~8교시의 `--cli`는 LLM 실행 파일(`agy`, `claude`, `codex`, `cursor-agent`, `copilot`)만 선택합니다.
 
 | 실습 | 산출물 |
 | --- | --- |

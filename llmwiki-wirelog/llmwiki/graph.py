@@ -54,7 +54,8 @@ class Graph:
         d=self.snapshots[snapshot];lit=lambda v:json.dumps(v,ensure_ascii=False)
         facts='\n'.join(f'depends_on({lit(f["subject"])},{lit(f["object"])}).' for f in d['assertions'])
         facts+='\n'+'\n'.join(f'about({lit(doc)},{lit(svc)}).' for doc,svc in d['about'])
-        relations=evaluate(MODEL,facts)['relations']
+        result=evaluate(MODEL,facts)
+        relations=result['relations']
         reach=relations.get('reach',[])
         if action=='upstream':rows=[r for r in reach if r[1]==service and r[0]!=service]
         elif action=='downstream':rows=[r for r in reach if r[0]==service and r[1]!=service]
@@ -63,7 +64,7 @@ class Graph:
         else:rows=[r for r in relations.get('doc_link',[]) if r[1]==service]
         paths=[self.path(d['assertions'],a,b) for a,b in rows] if action!='documents' else []
         ids={ident for path in paths if path for ident in path['assertion_ids']}
-        return {'kind':'graph','status':'success' if rows else 'empty','engine':'pyrewire','engine_version':'1.1.2',
+        return {'kind':'graph','status':'success' if rows else 'empty','engine':'pyrewire','engine_version':result['engine_version'],
           'snapshot':snapshot,'snapshot_kind':d['snapshot_kind'],'action':action,'service':service,'target':target,
           'rows':rows,'paths':paths,'facts':[f for f in d['assertions'] if f['assertion_id'] in ids],
           'rule_id':'reach-v1','rules':MODEL,

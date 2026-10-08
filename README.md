@@ -6,7 +6,7 @@
 
 ## 준비
 
-CPython 3.11~3.14와 로그인된 LLM CLI를 사용합니다. 엔진 의존성은 `pyrewire==1.1.2`로 고정합니다. 프로젝트 루트에서:
+CPython 3.11~3.14와 로그인된 LLM CLI를 사용합니다. 엔진 의존성은 `pyrewire>=1.1.2`를 사용합니다. 프로젝트 루트에서:
 
 ```sh
 python3 -m pip install -r demos/requirements.txt

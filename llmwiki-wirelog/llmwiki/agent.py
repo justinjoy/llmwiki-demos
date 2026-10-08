@@ -2,6 +2,7 @@
 from argparse import Namespace
 from datetime import datetime, timezone
 import json
+from importlib.metadata import version
 from pathlib import Path
 import tempfile
 import shutil
@@ -74,7 +75,7 @@ class Assistant:
         run_dir=Path(tempfile.mkdtemp(prefix=datetime.now().strftime('%Y%m%d-%H%M%S-'),dir=self.runs_dir))
         evidence={};keys={};seen=set();observations=[];calls=[];errors=0
         meta={'status':'running','question':question,'snapshot':snapshot,'created_at':datetime.now(timezone.utc).isoformat(),
-              'engine':'pyrewire','engine_version':'1.1.2','mode':'llm_selected_read_tools','run_id':run_dir.name}
+              'engine':'pyrewire','engine_version':version('pyrewire'),'mode':'llm_selected_read_tools','run_id':run_dir.name}
         write_json(run_dir/'run.json',meta)
         def register(item):
             key=json.dumps(item,sort_keys=True,ensure_ascii=False)
@@ -145,7 +146,7 @@ class Assistant:
 
 
 def render_answer(result):
-    answer=result['answer'];lines=[f"# {result['question']}",f"\n기준: {result['snapshot']} · PyreWire 1.1.2 · 교육용 자료\n"]
+    answer=result['answer'];lines=[f"# {result['question']}",f"\n기준: {result['snapshot']} · PyreWire {result['engine_version']} · 교육용 자료\n"]
     labels={'fact':'사실','inference':'해석','proposal':'제안'}
     for c in answer['claims']:lines.append(f"- **{labels[c['kind']]}** {c['text']} "+' '.join(f'[{e}]' for e in c['citations']))
     if answer['unknowns']:lines+=['\n## 미확인·추가 확인',*['- '+s for s in answer['unknowns']]]

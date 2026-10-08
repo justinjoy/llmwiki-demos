@@ -1,11 +1,12 @@
-"""Evaluate Datalog directly with PyreWire 1.1.2; no CLI or simulated fallback."""
+"""Evaluate Datalog directly with PyreWire >=1.1.2; no CLI or simulated fallback."""
 import argparse
 from importlib.metadata import PackageNotFoundError, version
 import json
 from pathlib import Path
 import re
+from packaging.version import Version
 
-REQUIRED_VERSION = '1.1.2'
+MINIMUM_VERSION = '1.1.2'
 # Register literals through the public interning API so snapshot rows contain
 # original symbols. Skip comments; never infer numeric symbol IDs ourselves.
 TOKENS = re.compile(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"', re.DOTALL)
@@ -15,9 +16,9 @@ def require_pyrewire():
     try:
         installed = version('pyrewire')
     except PackageNotFoundError as exc:
-        raise RuntimeError('python3 -m pip install pyrewire==1.1.2 를 먼저 실행하세요.') from exc
-    if installed != REQUIRED_VERSION:
-        raise RuntimeError(f'PyreWire {REQUIRED_VERSION} 필요; 현재 {installed}')
+        raise RuntimeError('python3 -m pip install "pyrewire>=1.1.2" 를 먼저 실행하세요.') from exc
+    if Version(installed) < Version(MINIMUM_VERSION):
+        raise RuntimeError(f'PyreWire {MINIMUM_VERSION} 이상 필요; 현재 {installed}')
     from pyrewire import EasySession, WirelogError
     return EasySession, WirelogError
 
@@ -39,7 +40,7 @@ def evaluate(model, facts, rules=''):
                     relations[name] = [list(row) for row in sorted(set(rows))]
     except WirelogError as exc:
         raise RuntimeError(f'PyreWire {type(exc).__name__}: {exc}') from exc
-    return {'status': 'success', 'engine': 'pyrewire', 'engine_version': REQUIRED_VERSION,
+    return {'status': 'success', 'engine': 'pyrewire', 'engine_version': version('pyrewire'),
             'api': 'EasySession.snapshot', 'relations': relations}
 
 

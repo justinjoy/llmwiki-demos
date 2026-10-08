@@ -1,1 +1,2 @@
-pyrewire==1.1.2
+pyrewire>=1.1.2
+packaging>=21.3

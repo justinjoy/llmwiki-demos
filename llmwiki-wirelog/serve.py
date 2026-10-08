@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Loopback-only web UI for the same natural-language assistant as ask.py."""
 import argparse
+from importlib.metadata import version
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import json
@@ -57,7 +58,7 @@ def handler_for(app):
             files={'/':('index.html','text/html; charset=utf-8'),'/app.js':('app.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8')}
             if path in files:
                 f,t=files[path];return self.send(200,(ROOT/'web'/f).read_bytes(),t)
-            if path=='/api/config':return self.send(200,{'token':app.token,'engine':'PyreWire 1.1.2','cli':app.bot.model.cli,'documents':len(app.bot.corpus.docs)})
+            if path=='/api/config':return self.send(200,{'token':app.token,'engine':f"PyreWire {version('pyrewire')}",'cli':app.bot.model.cli,'documents':len(app.bot.corpus.docs)})
             if path.startswith('/api/jobs/'):
                 if self.headers.get('X-Local-Token')!=app.token:return self.send(403,{'error':'세션 토큰 오류'})
                 with app.lock:

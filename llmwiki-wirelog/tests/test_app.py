@@ -1,3 +1,4 @@
+from importlib.metadata import version
 import copy
 import hashlib
 import json
@@ -23,7 +24,7 @@ class Tests(unittest.TestCase):
         for sid,services in [('S1',['order','pay','shop']),('S1b',['notify','order','pay','shop']),('S2',['order','pay','shop']),('S3',['order','shop'])]:
             with self.subTest(sid=sid):
                 r=self.graph.query('upstream','ledger',sid)
-                self.assertEqual([r[0] for r in r['rows']],services);self.assertEqual(r['engine_version'],'1.1.2')
+                self.assertEqual([r[0] for r in r['rows']],services);self.assertEqual(r['engine_version'],version('pyrewire'))
     def test_direction_and_path(self):
         r=self.graph.query('downstream','order');self.assertEqual(r['rows'],[['order','ledger'],['order','pay']])
         self.assertEqual(self.graph.query('path','notify',target='ledger')['paths'][0]['assertion_ids'],['F04','F02','F03'])

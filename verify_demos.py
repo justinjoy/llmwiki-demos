@@ -1,4 +1,5 @@
-"""Verify demos with PyreWire 1.1.2; never calls an LLM."""
+"""Verify demos with PyreWire >=1.1.2; never calls an LLM."""
+from packaging.version import Version
 import ast
 import copy
 import importlib.util
@@ -15,7 +16,8 @@ from check_links import check
 def main():
     passed=[]
     from importlib.metadata import version
-    assert version('pyrewire') == '1.1.2'
+    installed_version=version('pyrewire')
+    assert Version(installed_version) >= Version('1.1.2')
     def ok(name,condition):
         if not condition:raise AssertionError(name)
         passed.append(name)
@@ -61,7 +63,7 @@ def main():
         ok(f'7교시 {sid} 6회 예산',len(calls)==log['call_budget']==6)
         ok(f'7교시 {sid} 중복 호출 없음',len({json.dumps([c['tool'],c['input']],sort_keys=True) for c in calls})==6)
         ok(f'7교시 {sid} 읽기 도구만 사용',all(c['tool'] in {'find_candidates','find_documents','search_context','trace_path'} for c in calls))
-        ok(f'7교시 {sid} 실제 엔진 결과',log['engine_result']['engine']=='pyrewire' and log['engine_result']['engine_version']=='1.1.2' and log['engine_result']['status']=='success')
+        ok(f'7교시 {sid} 실제 엔진 결과',log['engine_result']['engine']=='pyrewire' and Version(log['engine_result']['engine_version'])>=Version('1.1.2') and log['engine_result']['status']=='success')
         start='notify' if sid=='S1b' else 'shop'
         ok(f'7교시 {sid} 사실 ID 경로',calls[-1]['output']['assertion_ids']==trace(snapshot(sid),start)['assertion_ids'])
         ok(f'7교시 {sid} 원문 링크로 확장',calls[3]['input']['doc_ids']==['OPS-04:v1'] and calls[4]['input']['doc_ids']==['RUN-02:v1'])
@@ -105,8 +107,8 @@ def main():
     ok('최종 답변의 기준·조건·미확인',all(s in answer for s in ['S1b','candidate-v1','notify','25분','42분','5분','미확인']))
     ok('위키는 사람 검토 대기',all(s in wiki for s in ['검토 대기','F04','F02','F03']))
     ok('실제 위키 변경 diff',(ROOT/'part08/change.diff').read_text().startswith('--- before/wiki/'))
-    report={'status':'success','checks':len(passed),'pyrewire_version':'1.1.2','llm_completed_outputs':len(successes),'passed':passed}
+    report={'status':'success','checks':len(passed),'pyrewire_version':installed_version,'llm_completed_outputs':len(successes),'passed':passed}
     (ROOT/'verification.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-    print(f'PASS: {len(passed)} checks; PyreWire 1.1.2 4 snapshots; LLM {len(successes)} completed outputs; sources, quotes, links, review boundaries.')
+    print(f'PASS: {len(passed)} checks; PyreWire {installed_version} 4 snapshots; LLM {len(successes)} completed outputs; sources, quotes, links, review boundaries.')
 
 if __name__=='__main__':main()

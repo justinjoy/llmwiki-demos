@@ -1,4 +1,5 @@
-"""One PyreWire 1.1.2 session: insert, no-change, retract (+2 / 0 / -2)."""
+"""One PyreWire session: insert, no-change, retract (+2 / 0 / -2)."""
+from importlib.metadata import version
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'shared'))
@@ -28,7 +29,7 @@ def run_delta():
                 [('mutual', ('alice', 'bob'), -1), ('mutual', ('bob', 'alice'), -1)]]
     if [sorted(step['events']) for step in steps] != expected:
         raise ValueError(f'Unexpected incremental events: {steps}')
-    return {'status': 'success', 'engine': 'pyrewire', 'engine_version': '1.1.2',
+    return {'status': 'success', 'engine': 'pyrewire', 'engine_version': version('pyrewire'),
             'mode': 'same_session_EasySession.step', 'steps': steps}
 
 if __name__ == '__main__':
