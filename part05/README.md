@@ -1,10 +1,8 @@
 # 5교시 · 관계와 규칙을 이용한 추론 검색
 
-[최종 슬라이드](../../slides/part05.pptx) · [전체 슬라이드 안내](../../slides/README.md)
-
 재귀 규칙으로 경로와 점검 후보를 찾고 설계 비교와 세션 철회를 구분합니다.
 
-기준 자료는 [최종 인포그래픽 슬라이드](../../output/인포그래픽_개정본/PPT/05_관계와_규칙을_이용한_추론_검색_v4.pptx)와 그 교육자료입니다. [슬라이드별 연결](SLIDE_MAP.md)을 참고하세요. 각 실습 A는 슬라이드 10의 10분, B는 슬라이드 12의 13분입니다.
+실습 A는 10분, 실습 B는 13분 동안 진행합니다.
 
 ## 바로 실행
 
@@ -22,7 +20,7 @@ CPython 3.11~3.14와 `pyrewire==1.1.2`를 사용합니다. 엔진은 `EasySessio
 | A | rules.dl, S1_result.json |
 | B | S2_result.json, S3_result.json, comparison.csv, delta_actual.txt |
 
-## 실습 A · 슬라이드 10 · 10분
+## 실습 A · 10분
 
 ```sh
 python3 run_lesson5.py --task reason
@@ -30,7 +28,7 @@ python3 run_lesson5.py --task reason
 
 `rules.dl`에서 직접 호출을 reach에 넣는 첫 규칙과 경로를 확장하는 재귀 규칙을 확인합니다. S1의 직접 관계는 3개, reach는 6개, candidate는 3개, candidate_doc은 3개입니다. `S1_result.json`의 paths에서 shop의 F01/F02/F03 경로를 원문과 대조합니다. 경로 설명은 Python에서 구성한 별도 근거 계층입니다.
 
-## 실습 B · 슬라이드 12 · 13분
+## 실습 B · 13분
 
 ```sh
 python3 run_lesson5.py --task compare
@@ -49,7 +47,7 @@ S2/S3는 설계 검증 가정이며 운영 배포 사실이 아닙니다. 후반
 
 `session_delta.py`가 하나의 `EasySession`에서 `insert`, `remove`, `step`을 실행합니다. 실제 이벤트가 +2/0/−2인지 확인하고 `delta_run.json`에 기록합니다.
 
-## 확인 문제 · 슬라이드 15~16
+## 확인 문제
 
 - S3에는 order → ledger가 남아서 order와 shop 후보도 남습니다.
 - 후보는 점검 대상입니다. 실제 장애 여부는 현재 지표로 확인합니다.

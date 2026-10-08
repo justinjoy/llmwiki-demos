@@ -1,10 +1,8 @@
 # 7교시 · LLM과 Wirelog의 검색 협업
 
-[최종 슬라이드](../../slides/part07.pptx) · [전체 슬라이드 안내](../../slides/README.md)
-
 수동 계획에 따라 읽기 도구를 실행하고 새 단서 F04와 S1b의 차이를 확인합니다.
 
-기준 자료는 [최종 인포그래픽 슬라이드](../../output/인포그래픽_개정본/PPT/07_LLM과_Wirelog의_검색_협업_v4.pptx)와 그 교육자료입니다. [슬라이드별 연결](SLIDE_MAP.md)을 참고하세요. 각 실습 A는 슬라이드 10의 10분, B는 슬라이드 12의 13분입니다.
+실습 A는 10분, 실습 B는 13분 동안 진행합니다.
 
 ## 바로 실행
 
@@ -22,7 +20,7 @@ CPython 3.11~3.14와 `pyrewire==1.1.2`를 사용합니다. 엔진은 `EasySessio
 | A | plan.json, tool_contracts.json, S1_log.json |
 | B | F04_pending.json, S1b_log.json, S1b_input.json, comparison.json, decision.md |
 
-## 실습 A · 슬라이드 10 · 10분
+## 실습 A · 10분
 
 ```sh
 python3 run_lesson7.py --task inspect
@@ -41,7 +39,7 @@ python3 run_lesson7.py --task inspect
 
 질문 분해 2분, 실제 도구 실행·원문 읽기 5분, 입력·출력·선택 이유 기록 3분입니다. `S1_log.json`에 각 호출 인자·상태·결과·확장 이유·종료 이유·실제 엔진 출력을 저장합니다.
 
-## 실습 B · 슬라이드 12 · 13분
+## 실습 B · 13분
 
 ```sh
 python3 run_lesson7.py --cli agy --task extract --overwrite
@@ -59,7 +57,7 @@ python3 run_lesson7.py --task compare --approved-f04 F04_approved.json
 
 S1b 후보는 4개이며 notify의 사실 ID 경로는 F04/F02/F03입니다. S1b는 S1의 지식 보완 분기이며 S2/S3 설계 변경과 섞지 않습니다. notify의 영향은 알림 지연 점검이며 결제 실패로 단정하지 않습니다.
 
-## 확인 문제 · 슬라이드 15~16
+## 확인 문제
 
 새 관계는 표준 ID·방향·인용 검토 후 반영합니다. error는 조회 실패, empty는 조회 성공 후 결과 없음입니다. 호출 예산은 실행당 6회이며 동일 도구·동일 인자 반복을 차단합니다. `decision.md`는 LLM의 해석 초안이므로 도구 로그와 대조합니다.
 

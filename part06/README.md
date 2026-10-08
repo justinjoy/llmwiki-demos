@@ -1,10 +1,8 @@
 # 6교시 · 추론 결과를 확장하는 LLM 검색
 
-[최종 슬라이드](../../slides/part06.pptx) · [전체 슬라이드 안내](../../slides/README.md)
-
 S1으로 복귀하여 원문에서 설계 이유·조치 조건·관측 시간의 의미를 보완합니다.
 
-기준 자료는 [최종 인포그래픽 슬라이드](../../output/인포그래픽_개정본/PPT/06_추론_결과를_확장하는_LLM_검색_v5.pptx)와 그 교육자료입니다. [슬라이드별 연결](SLIDE_MAP.md)을 참고하세요. 각 실습 A는 슬라이드 10의 10분, B는 슬라이드 12의 13분입니다.
+실습 A는 10분, 실습 B는 13분 동안 진행합니다.
 
 ## 바로 실행
 
@@ -22,7 +20,7 @@ CPython 3.11~3.14와 `pyrewire==1.1.2`를 사용합니다. 엔진은 `EasySessio
 | A | S1_result.json, input.json, evidence_bundle.json |
 | B | comparison.csv, search_plan.md |
 
-## 실습 A · 슬라이드 10 · 10분
+## 실습 A · 10분
 
 ```sh
 python3 run_lesson6.py --cli agy --task evidence --overwrite
@@ -37,7 +35,7 @@ S1을 실제 Wirelog로 조회하여 `input.json`을 만들고, 원문 4개를 L
 
 원문에 없는 인용, 누락된 정책·시간 근거, 바뀐 후보 집합은 실행 중 검사합니다. 의미·적용 조건은 사람이 확인합니다.
 
-## 실습 B · 슬라이드 12 · 13분
+## 실습 B · 13분
 
 ```sh
 python3 run_lesson6.py --cli agy --task compare --overwrite
@@ -46,7 +44,7 @@ python3 run_lesson6.py --cli agy --task plan --overwrite
 
 A ‘전체 결제 재시도 즉시 중지’, B ‘조건·승인 후 영향 대사 큐만 제어’, C ‘다음 사고도 25분 내 복구’를 비교합니다. 4분 동안 판정을 검토하고, 4분 동안 조건과 시간을 수정하고, 5분 동안 현재 필요한 증거를 정리합니다.
 
-## 확인 문제 · 슬라이드 15~16
+## 확인 문제
 
 OPS-04 문서 승인과 현재 사고의 실행 승인은 별개입니다. 25분은 신규 주문 처리 정상화, 42분은 지연 주문 대사 완료입니다. 현재 지표·불일치 목록·영향 범위·승인 기록·향후 복구 시각은 제공되지 않았습니다.
 

@@ -1,7 +1,6 @@
-"""Verify final-slide demos with PyreWire 1.1.2; never calls an LLM."""
+"""Verify demos with PyreWire 1.1.2; never calls an LLM."""
 import ast
 import copy
-import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -20,11 +19,6 @@ def main():
     def ok(name,condition):
         if not condition:raise AssertionError(name)
         passed.append(name)
-    manifest=read_json(ROOT/'shared/slide_manifest.json')
-    ok('최종 PPT 8개·144장',len(manifest)==8 and sum(len(x['slides']) for x in manifest)==144)
-    for item in manifest:
-        p=ROOT.parent/item['file']
-        ok('슬라이드 원본 보존 '+str(item['lesson']),hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256'])
     for part in range(3,9):
         folder=ROOT/f'part{part:02}'
         for p in folder.glob('raw/*.md'):

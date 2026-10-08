@@ -1,10 +1,8 @@
-# 최종 인포그래픽 슬라이드 실습 데모
-
-[데모와 정렬된 최종 슬라이드 8개](../slides/README.md)
+# LLMWiki 실습 데모
 
 [자연어 질문 통합 데모: LLMWiki × PyreWire](llmwiki-wirelog/README.md) — 웹 질문 화면과 터미널 대화.
 
-`output/인포그래픽_개정본`의 8개 PPT, 총 144장과 발표자 노트를 기준으로 구성했습니다. 1·2교시의 기존 CLI 패턴을 이어 3~8교시의 원문·실행기·프롬프트·실제 결과·검토 자료를 제공합니다.
+1·2교시의 CLI 패턴을 이어 3~8교시의 원문·실행기·프롬프트·실제 결과·검토 자료를 제공합니다.
 
 ## 준비
 
@@ -42,11 +40,11 @@ python3 demos/part08/run_lesson8.py --cli agy --task all --overwrite
 | 7 | [part07](part07/README.md) | 고정 계획의 실제 도구 로그, F04, S1b 비교 |
 | 8 | [part08](part08/README.md) | 최종 답변·주장표·분석 위키·변경 diff |
 
-3~8교시 각 폴더의 `SLIDE_MAP.md`는 18장 전체를 실행 자료와 연결합니다. `shared/slide_manifest.json`은 8개 기준 원본 슬라이드의 경로·SHA-256·전체 텍스트를 기록합니다. `shared/common`은 같은 최종 교육자료의 원문과 재시작 체크포인트입니다.
+`shared/common`은 공통 원문과 재시작 체크포인트입니다.
 
 ## 교시 사이의 입력
 
-- 3교시는 2교시 타입·관계 사전 복사본을 읽습니다. 표준 서비스 ID는 3교시 슬라이드의 접두사 없는 표현을 씁니다.
+- 3교시는 2교시 타입·관계 사전 복사본을 읽습니다. 표준 서비스 ID는 접두사 없는 표현을 씁니다.
 - 4교시 `--assertions`로 3교시 승인 파일을 연결합니다. 생략하면 명시된 교육용 승인 예시 S1을 사용합니다.
 - 5교시 S2/S3는 CHG-12의 설계 분석 가정입니다. 6교시는 S1으로 돌아갑니다.
 - 7교시 S1b는 RUN-02에서 확인한 F04를 보완한 분기입니다. 기본 실행은 최종 교육자료의 승인 예시를 사용하며 새 LLM 후보를 자동 승인하지 않습니다.
@@ -58,7 +56,7 @@ python3 demos/part08/run_lesson8.py --cli agy --task all --overwrite
 
 3·6·7·8교시의 `--cli agy`를 `claude`, `cursor-agent`, `copilot`, `codex`로 바꿀 수 있습니다. Codex는 내부에서 `exec`로 연결합니다. 공통 실행기의 `-p`는 프롬프트 파일을 뜻합니다. 추가 모델 옵션은 `--cli-arg=--model --cli-arg=모델명` 형태입니다.
 
-LLM 입력·stdout·stderr·기존 파일 백업은 각 `runs/`에 있습니다. 생성 결과를 모형 응답이나 정답 복사로 대체하지 않습니다. 7교시의 읽기 도구 계획은 슬라이드대로 수동 고정 계획이며 LLM 자동 도구 선택과 구분합니다.
+LLM 입력·stdout·stderr·기존 파일 백업은 각 `runs/`에 있습니다. 생성 결과를 모형 응답이나 정답 복사로 대체하지 않습니다. 7교시의 읽기 도구 계획은 수동 고정 계획이며 LLM 자동 도구 선택과 구분합니다.
 
 ```sh
 python3 demos/verify_demos.py

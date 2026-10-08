@@ -23,7 +23,7 @@ def main():
                     if row.get(key)!=value:raise ValueError('F04 추출 필드를 확인하세요: '+key)
         elif task=='compare':
             s1=run('S1');data=snapshot('S1b')
-            mode='최종 슬라이드 교육자료의 승인 예시 체크포인트; 학습자 자동 승인 아님'
+            mode='교육용 승인 예시 체크포인트; 학습자 자동 승인 아님'
             if a.approved_f04:
                 text=a.approved_f04.read_text(encoding='utf-8').strip();row=json.loads(text)
                 if row.get('assertion_id')!='F04':raise ValueError('F04 승인 파일이 필요합니다.')
