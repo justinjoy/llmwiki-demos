@@ -13,7 +13,7 @@ python3 -m pip install -r demos/requirements.txt
 python3 demos/setup_pyrewire.py
 ```
 
-교육용 가상환경을 사용하려면 먼저 `python3 -m venv .venv`와 `source .venv/bin/activate`를 실행합니다. 4~8교시는 PyreWire Python API를 직접 호출합니다. 현재 환경의 0.1.0 editable 설치는 제거하고 PyPI의 1.1.2 배포본으로 교체했습니다. 설치 근거: [PyreWire 1.1.2](https://pypi.org/project/pyrewire/1.1.2/).
+교육용 가상환경을 사용하려면 먼저 `python3 -m venv .venv`와 `source .venv/bin/activate`를 실행합니다. 4~8교시는 PyreWire Python API를 직접 호출합니다.
 
 ## 교시별 실행
 
