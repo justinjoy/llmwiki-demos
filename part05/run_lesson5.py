@@ -1,6 +1,7 @@
 """5교시: 실제 Wirelog 재귀 질의와 S1/S2/S3 비교, PyreWire 동일 세션 철회."""
 import argparse
 import csv
+from functools import partial
 import io
 import json
 from pathlib import Path
@@ -28,16 +29,20 @@ def main():
         buf=io.StringIO();w=csv.writer(buf);w.writerow(['snapshot','kind','direct','reach','candidate','candidate_doc','services']);w.writerows(comparisons)
         save(ROOT,'comparison.csv',buf.getvalue())
     if a.task in ['delta','all']:
-        result=run_delta()
-        save(ROOT,'delta_run.json',result)
+        result=run_delta(progress=partial(print,flush=True))
+        saved=save(ROOT,'delta_run.json',result)
+        print(f'[저장 완료] {saved}',flush=True)
         lines=[]
         for i,step in enumerate(result['steps'],1):
             lines.append(f"step {i}: {step['action']}")
             for relation,row,diff in step['events']:
                 lines.append(f"{'+' if diff>0 else '-'} {relation}{tuple(row)} (diff={diff})")
             if not step['events']:lines.append('no change')
-        save(ROOT,'delta_actual.txt','\n'.join(lines)+'\n')
-    print('5교시 완료: PyreWire 스냅샷 재평가와 동일 세션 delta를 각각 저장했습니다.')
+        saved=save(ROOT,'delta_actual.txt','\n'.join(lines)+'\n')
+        print(f'[저장 완료] {saved}',flush=True)
+    completed={'reason':'S1 스냅샷 추론 결과', 'compare':'S1/S2/S3 스냅샷 비교 결과',
+               'delta':'동일 세션 delta 결과', 'all':'PyreWire 스냅샷 재평가와 동일 세션 delta 결과'}
+    print(f'5교시 완료: {completed[a.task]}를 저장했습니다.')
 
 if __name__=='__main__':
     try:main()

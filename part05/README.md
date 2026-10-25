@@ -47,6 +47,8 @@ S2/S3는 설계 검증 가정이며 운영 배포 사실이 아닙니다. 후반
 
 `session_delta.py`가 하나의 `EasySession`에서 `insert`, `remove`, `step`을 실행합니다. 실제 이벤트가 +2/0/−2인지 확인하고 `delta_run.json`에 기록합니다.
 
+`--task delta`(또는 `--task all`) 실행 화면에는 mutual 규칙, 단계별 friend 추가·삭제, 각 `step()` 직후의 실제 변화가 순서대로 표시됩니다. 양방향 추가는 `+` 두 줄, 한쪽 방향 추가는 `no change`, 역방향 삭제는 `-` 두 줄로 확인할 수 있습니다. 검증을 통과하면 검증 완료 메시지를 표시하고, `delta_run.json`과 `delta_actual.txt`를 저장한 경로도 출력합니다. `python3 session_delta.py`를 직접 실행하면 기존처럼 JSON만 출력합니다.
+
 ## 확인 문제
 
 - S3에는 order → ledger가 남아서 order와 shop 후보도 남습니다.
