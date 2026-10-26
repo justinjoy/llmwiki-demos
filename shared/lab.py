@@ -150,11 +150,11 @@ def llm_parser(description,tasks):
     return p
 
 
-def llm(root,args,prompt,contexts,output):
+def llm(root,args,prompt,contexts,output,progress=None):
     params=argparse.Namespace(**vars(args))
     params.prompt=str(root/prompt);params.context=[str(Path(p)) for p in contexts]
     params.output=str(root/output);params.log_dir=str(root/'runs')
-    rc=run_prompt.execute(params)
+    rc=run_prompt.execute(params,progress=progress)
     if rc: raise RuntimeError(f'LLM 실행 실패: {output}, 종료 코드 {rc}')
 
 

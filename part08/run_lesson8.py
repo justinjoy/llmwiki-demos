@@ -1,5 +1,6 @@
 """8교시: 실제 S1b 결과와 문맥 근거로 답변·주장 검토·위키 초안·변경 기록 생성."""
 from datetime import datetime
+from functools import partial
 import csv
 import difflib
 from pathlib import Path
@@ -8,7 +9,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'shared'))
 from lab import llm_parser,llm,snapshot,engine,save,read_json,check_evidence,documents
 from check_links import check
 ROOT=Path(__file__).resolve().parent
-TASKS={'answer':('prompt.txt','final_answer.md',[]),
+TASKS={'answer':('prompt.txt','final_answer.md',['S1b_input.json']),
        'claims':('prompts/claims.txt','claim_review.csv',['final_answer.md']),
        'wiki':('prompts/wiki.txt','wiki/analysis/ledger-impact-S1b.md',['final_answer.md','claim_review.csv']),
        'review':('prompts/review.txt','change_review.md',['final_answer.md','wiki/analysis/ledger-impact-S1b.md','change.diff','wiki/log.md'])}
@@ -62,14 +63,22 @@ def main():
     for task in tasks:
         prompt,out,extra=TASKS[task]
         before={p.relative_to(ROOT).as_posix():p.read_text() for p in (ROOT/'wiki').rglob('*.md')} if task=='wiki' else {}
-        llm(ROOT,a,prompt,[*base,*[ROOT/n for n in extra]],out)
+        progress=partial(print,flush=True) if task=='answer' else None
+        if progress:
+            progress('[answer 시작] 질의 결과의 후보·사실 경로를 원문과 대조하고, 문서에서 영향·조치 근거를 찾아 답변을 작성합니다.')
+        llm(ROOT,a,prompt,[*base,*[ROOT/n for n in extra]],out,progress=progress)
         if a.dry_run:continue
         if task=='claims':
             with (ROOT/out).open(encoding='utf-8-sig',newline='') as f:
                 reader=csv.DictReader(f);rows=list(reader)
                 if reader.fieldnames!=['주장','유형','근거','판정'] or not rows or any(None in r or None in r.values() for r in rows):raise ValueError('주장 검토 CSV 형식을 확인하세요.')
         if task=='wiki':finish_wiki(before)
-    print('8교시 완료. 답변·주장표·위키 초안·실제 변경 diff를 저장했습니다.')
+    if a.dry_run:
+        print('8교시 미리보기 완료. 기존 참고 파일로 입력만 구성했습니다. 질의 재실행·LLM 호출·결과 변경은 수행하지 않았습니다.')
+    elif a.task=='answer':
+        print('8교시 answer 완료. 질의 결과와 문서를 입력으로 final_answer.md 초안을 저장했습니다. 원문 대조와 사람 검토가 필요합니다.')
+    else:
+        print('8교시 완료. 답변·주장표·위키 초안·실제 변경 diff를 저장했습니다.')
 
 if __name__=='__main__':
     try:main()

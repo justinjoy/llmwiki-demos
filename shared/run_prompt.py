@@ -15,6 +15,10 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
+
+
+PROGRESS_INTERVAL = 5
 
 
 def cli_command(cli, extra, mode, prompt):
@@ -60,7 +64,11 @@ def clean_response(text):
     return text + "\n"
 
 
-def execute(args):
+def execute(args, progress=None):
+    def report(message):
+        if progress is not None:
+            progress(message)
+
     prompt_file = Path(args.prompt).resolve()
     contexts = [Path(p).resolve() for p in args.context]
     output = Path(args.output).resolve()
@@ -70,7 +78,12 @@ def execute(args):
         raise ValueError("출력 파일은 프롬프트·참고 파일과 달라야 합니다.")
     if output.exists() and not args.overwrite and not args.dry_run:
         raise ValueError(f"결과 파일이 이미 있습니다: {output}\n다시 생성하려면 --overwrite를 지정하세요. 기존 파일은 실행 기록에 백업합니다.")
+    report(f"[입력 준비] 프롬프트: {prompt_file}")
+    for index, path in enumerate(contexts, 1):
+        report(f"[참고 파일 {index}/{len(contexts)}] {path}")
+    report(f"[출력 설정] {output} / 덮어쓰기: {'허용 (기존 결과 백업 후 교체)' if args.overwrite else '금지'}")
     prompt = build_prompt(prompt_file, contexts, output)
+    report(f"[입력 준비 완료] 참고 파일 {len(contexts)}개, 전체 입력 {len(prompt.encode('utf-8')):,}바이트")
     log_root = Path(args.log_dir).resolve()
     log_root.mkdir(parents=True, exist_ok=True)
     run_dir = Path(tempfile.mkdtemp(prefix=datetime.now().strftime("%Y%m%d-%H%M%S-"), dir=log_root))
@@ -88,6 +101,7 @@ def execute(args):
 
     record("dry_run" if args.dry_run else "prepared")
     print(f"입력: {run_dir / 'input.txt'}", flush=True)
+    report(f"[실행 기록] 상태: {run_dir / 'run.json'}")
     if args.dry_run:
         print("미리보기만 생성했습니다. LLM 호출·결과 파일 변경은 하지 않았습니다.")
         return 0
@@ -98,6 +112,9 @@ def execute(args):
     command[0] = executable
     work = run_dir / "work"
     work.mkdir()
+    report(f"[CLI 준비] 실행 파일: {executable} / 모드: {args.mode} / 제한 시간: {args.timeout}초")
+    report(f"[CLI 준비] 작업 디렉터리: {work}")
+    report(f"[출력 기록] stdout: {run_dir / 'stdout.txt'} / stderr: {run_dir / 'stderr.txt'}")
     print(f"실행: {args.cli} / 최대 {args.timeout}초", flush=True)
     proc = None
     try:
@@ -105,7 +122,23 @@ def execute(args):
             proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr,
                                     cwd=work, start_new_session=(os.name == "posix"))
             try:
-                proc.communicate(stdin.encode("utf-8"), timeout=args.timeout)
+                started = time.monotonic()
+                report(f"[CLI 실행 중] PID {proc.pid}: 응답을 기다립니다. {PROGRESS_INTERVAL}초마다 경과 시간과 출력 수신량을 표시합니다.")
+                payload = stdin.encode("utf-8")
+                while True:
+                    remaining = args.timeout - (time.monotonic() - started)
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired(command, args.timeout)
+                    try:
+                        proc.communicate(payload, timeout=min(PROGRESS_INTERVAL, remaining) if progress is not None else remaining)
+                        break
+                    except subprocess.TimeoutExpired:
+                        # communicate() retains pending stdin when a wait times out.
+                        payload = None
+                        elapsed = time.monotonic() - started
+                        if elapsed >= args.timeout:
+                            raise
+                        report(f"[CLI 응답 대기] {elapsed:.1f}/{args.timeout:g}초 경과 / stdout {os.fstat(stdout.fileno()).st_size:,}바이트 / stderr {os.fstat(stderr.fileno()).st_size:,}바이트")
             except (subprocess.TimeoutExpired, KeyboardInterrupt) as exc:
                 if os.name == "posix":
                     os.killpg(proc.pid, signal.SIGKILL)
@@ -116,15 +149,19 @@ def execute(args):
                 record("timeout" if code == 124 else "interrupted", returncode=code)
                 print(f"실행 중단. 결과 파일은 저장하지 않았습니다. 기록: {run_dir}", file=sys.stderr)
                 return code
+        report(f"[CLI 종료] 종료 코드 {proc.returncode} / {time.monotonic() - started:.1f}초 경과")
         if proc.returncode:
             record("cli_error", returncode=proc.returncode)
             print(f"CLI 실행 실패({proc.returncode}). 결과 파일은 저장하지 않았습니다.\n오류 기록: {run_dir / 'stderr.txt'}", file=sys.stderr)
             return proc.returncode if 0 < proc.returncode < 126 else 1
+        report("[응답 처리] stdout을 읽어 ANSI 제어 문자·바깥 코드 블록을 정리하고 빈 응답인지 확인합니다.")
         response = clean_response((run_dir / "stdout.txt").read_text(encoding="utf-8"))
         if output.exists():
             if not args.overwrite:
                 raise ValueError("실행 중 출력 파일이 생성되어 저장을 중단했습니다.")
             shutil.copy2(output, run_dir / ("previous" + output.suffix))
+            report(f"[백업 완료] {run_dir / ('previous' + output.suffix)}")
+        report(f"[결과 저장] {len(response.encode('utf-8')):,}바이트를 임시 파일에 쓴 뒤 {output}으로 교체합니다.")
         output.parent.mkdir(parents=True, exist_ok=True)
         fd, temporary = tempfile.mkstemp(prefix=".llm-", dir=output.parent)
         try:

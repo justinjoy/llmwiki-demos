@@ -19,11 +19,23 @@ def main():
             saved=save(ROOT,'S1_log.json',result)
             print(f'[저장 완료] {saved}',flush=True)
         elif task=='extract':
-            llm(ROOT,a,'prompt.txt',[ROOT/'raw/RUN-02_v1.md',ROOT/'raw/GLOSS-01_v1.md'],'F04_pending.json')
+            progress=partial(print,flush=True)
+            progress('[extract 시작] RUN-02 v1 §1의 notify → order 직접 HTTP 호출을 F04 검토 대기 초안으로 추출합니다.')
+            llm(ROOT,a,'prompt.txt',[ROOT/'raw/RUN-02_v1.md',ROOT/'raw/GLOSS-01_v1.md'],'F04_pending.json',progress=progress)
             if not a.dry_run:
-                row=read_json(ROOT/'F04_pending.json');check_quote(row)
+                progress('[검증 1/3] F04_pending.json을 JSON 객체로 읽습니다.')
+                row=read_json(ROOT/'F04_pending.json')
+                if not isinstance(row,dict):raise ValueError('F04 추출 결과는 JSON 객체여야 합니다.')
+                progress('[검증 2/3] 출처 ID·버전·절·인용문을 확인하고 해당 원문 절에 인용문이 존재하는지 대조합니다.')
+                check_quote(row)
+                progress(f"[인용 검증 완료] {row['source_id']} {row['version']} {row['section']}: {row['quote']}")
+                progress('[검증 3/3] F04 식별자·관계 방향·검토 상태·검토자·스냅샷·문서 상태를 확인합니다.')
                 for key,value in {'assertion_id':'F04','subject':'notify','object':'order','predicate':'depends_on','review_status':'pending','reviewer':'','snapshot_id':'S1b','document_status':'approved'}.items():
                     if row.get(key)!=value:raise ValueError('F04 추출 필드를 확인하세요: '+key)
+                    progress(f'[필드 확인] {key} = {value!r}')
+                progress('[extract 완료] F04_pending.json 저장 및 검증 완료. review_status=pending이며 사람의 검토가 필요합니다.')
+            else:
+                progress('[extract 미리보기 완료] 입력 생성 완료. 추출 결과 검증은 실제 실행 시 수행합니다.')
         elif task=='compare':
             s1=run('S1');data=snapshot('S1b')
             mode='교육용 승인 예시 체크포인트; 학습자 자동 승인 아님'
@@ -39,7 +51,7 @@ def main():
             llm(ROOT,a,'prompts/decision.txt',[ROOT/n for n in ['S1_log.json','S1b_log.json','F04_pending.json','raw/RUN-02_v1.md','raw/OPS-04_v1.md']],'decision.md')
     if a.task=='inspect':
         print('7교시 inspect 완료: S1의 실제 호출 인자·결과·전체 원문 인용을 S1_log.json에 저장했습니다.')
-    else:
+    elif a.task!='extract':
         print('7교시 완료. S1/S1b 각각 호출 예산 6회, 실제 도구 로그 저장.')
 
 if __name__=='__main__':

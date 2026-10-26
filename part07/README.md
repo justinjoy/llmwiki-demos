@@ -49,6 +49,8 @@ python3 run_lesson7.py --task compare
 python3 run_lesson7.py --cli agy --task decision --overwrite
 ```
 
+`python3 run_lesson7.py --cli copilot --task extract --overwrite`를 실행하면 추출 목표, 프롬프트와 참고 파일 경로, 입력 크기, CLI 실행 파일과 제한 시간, 실행 기록 위치가 순서대로 표시됩니다. 응답을 기다리는 동안 5초마다 경과 시간과 stdout/stderr 수신 바이트 수를 출력합니다. 이는 실행 상태 안내이며 Copilot 내부 추론이나 진행률을 뜻하지 않습니다. CLI 종료 후에는 응답 정리, 기존 결과 백업, 결과 저장, JSON·원문 인용·필드 검증 결과가 표시됩니다. 상세 stdout/stderr는 안내된 `runs/` 경로에서 확인할 수 있습니다. `--task all`의 추출 단계에도 같은 메시지가 표시되며, `--dry-run`에서는 입력 준비까지만 수행합니다.
+
 4분 동안 F04의 notify → order 호출과 RUN-02 §2를 검토합니다. 다음 4분은 승인 과정을 연습하고 교육자료의 S1b 승인 체크포인트를 선택합니다. 마지막 5분은 재질의 결과·업무 영향·종료 사유를 설명합니다.
 
 기본 비교는 **최종 교육자료의 승인 예시**로 실행합니다. `F04_pending.json`은 자동 승인하지 않습니다. 본인 실습에서는 후보를 `F04_approved.json`으로 복사한 뒤 실제 검토자가 `review_status`를 approved로, `reviewer`를 본인 식별자로 변경하고 실행합니다.
