@@ -1,5 +1,6 @@
 """7교시: 수동 계획의 실제 읽기 도구 실행, F04 추출, S1b 체크포인트 비교."""
 from pathlib import Path
+from functools import partial
 import json
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'shared'))
@@ -14,7 +15,9 @@ def main():
     if a.dry_run and any(t in tasks for t in ['inspect','compare']):p.error('읽기 도구 단계는 실제 실행합니다. 미리보기는 --task extract 또는 decision에 사용하세요.')
     for task in tasks:
         if task=='inspect':
-            save(ROOT,'S1_log.json',run('S1'))
+            result=run('S1',progress=partial(print,flush=True))
+            saved=save(ROOT,'S1_log.json',result)
+            print(f'[저장 완료] {saved}',flush=True)
         elif task=='extract':
             llm(ROOT,a,'prompt.txt',[ROOT/'raw/RUN-02_v1.md',ROOT/'raw/GLOSS-01_v1.md'],'F04_pending.json')
             if not a.dry_run:
@@ -34,7 +37,10 @@ def main():
                  'notify_path':s1b['calls'][-1]['output']['assertion_ids'],'input_kind':mode})
         else:
             llm(ROOT,a,'prompts/decision.txt',[ROOT/n for n in ['S1_log.json','S1b_log.json','F04_pending.json','raw/RUN-02_v1.md','raw/OPS-04_v1.md']],'decision.md')
-    print('7교시 완료. S1/S1b 각각 호출 예산 6회, 실제 도구 로그 저장.')
+    if a.task=='inspect':
+        print('7교시 inspect 완료: S1의 실제 호출 인자·결과·전체 원문 인용을 S1_log.json에 저장했습니다.')
+    else:
+        print('7교시 완료. S1/S1b 각각 호출 예산 6회, 실제 도구 로그 저장.')
 
 if __name__=='__main__':
     try:main()
