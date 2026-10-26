@@ -14,7 +14,8 @@ def main():
     if not a.dry_run and ('evidence' in tasks or not (ROOT/'input.json').exists()):
         result=engine(ROOT,snapshot('S1'),(ROOT/'model.dl').read_text(),(ROOT/'rules.dl').read_text(),output='S1_result.json')
         save(ROOT,'input.json',{'snapshot_id':'S1','candidates':[r[0] for r in result['relations']['candidate']],
-              'initial_doc_ids':sorted({r[1] for r in result['relations']['candidate_doc']}),'rule_id':'candidate-v1','paths':result['paths']})
+              'initial_doc_ids':sorted({r[1] for r in result['relations']['candidate_doc']}),
+              'candidate_doc':result['relations']['candidate_doc'],'rule_id':'candidate-v1','paths':result['paths']})
     for task in tasks:
         prompt,out,extra=TASKS[task]
         if extra and not a.dry_run:check_evidence(ROOT/'evidence_bundle.json',ROOT/'raw')
