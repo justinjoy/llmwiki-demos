@@ -13,6 +13,8 @@ cd demos/part04
 python3 run_lesson4.py --task all
 ```
 
+실행 화면에는 입력 출처와 승인 검증, 실제 `depends_on`/`about` 사실, 기본·추가 질의의 결과 튜플과 개수, 잘못된 열 수의 실제 오류, 역방향 입력의 실행 결과가 순서대로 표시됩니다. 각 작업을 시작할 때 진행 내용을 출력하고, 검증·저장이 성공한 뒤 완료 메시지와 저장 경로를 표시합니다. 개별 `--task query`, `extend`, `invalid`도 선택한 작업의 과정을 출력합니다. 기본·추가 질의의 엔진 실행 기록은 `runs/engine-*`에서 확인합니다.
+
 CPython 3.11~3.14와 `pyrewire>=1.1.2`를 사용합니다. 엔진은 `EasySession.snapshot()`을 직접 호출합니다. 6~8교시의 `--cli`는 LLM 실행 파일(`agy`, `claude`, `codex`, `cursor-agent`, `copilot`)만 선택합니다.
 
 | 실습 | 산출물 |
@@ -42,6 +44,8 @@ python3 run_lesson4.py --task invalid
 ```
 
 `queries.dl`의 order_doc과 shop_dep을 읽고 각각 `ADR-07:v1`, `order`가 나오는 이유를 설명합니다. 잘못된 열 수는 `invalid_result.json`에 실제 파서 오류로 기록됩니다. 역방향 입력은 `direction_result.json`에서 실행에 성공하므로 원문 대조가 필요합니다. `errors/`의 입력과 결과를 함께 제출합니다.
+
+사용자 승인 입력에 `order → pay`가 없으면 방향 변경이 없었다는 안내와 실제 결과를 표시합니다. `invalid`의 두 예제는 직접 평가하므로 `runs/engine-*` 기록을 생성하지 않습니다. 기존 파일을 교체할 때의 `runs/files-*` 백업은 유지됩니다.
 
 ## 확인 문제
 
