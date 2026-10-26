@@ -1,4 +1,5 @@
 from importlib.metadata import version
+from contextlib import contextmanager
 import copy
 import hashlib
 import json
@@ -7,6 +8,9 @@ import shutil
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+import threading
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from llmwiki.agent import Assistant
 from llmwiki.corpus import Corpus
@@ -99,5 +103,129 @@ class HTTPTests(unittest.TestCase):
                 with self.assertRaises(HTTPError) as e:urlopen(base+'/data/raw/ARCH-01_v1.md')
                 self.assertEqual(e.exception.code,404);e.exception.close()
             finally:server.shutdown();server.server_close();app.pool.shutdown(wait=True)
+
+class CLISelectionTests(unittest.TestCase):
+    def model(self,cli,text):
+        model=ScriptedModel([{'type':'answer','claims':[],'unknowns':[text]}])
+        model.cli=cli
+        return model
+
+    @contextmanager
+    def web_app(self,app):
+        from http.server import ThreadingHTTPServer
+        from serve import handler_for
+        server=ThreadingHTTPServer(('127.0.0.1',0),handler_for(app))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:yield f'http://127.0.0.1:{server.server_port}'
+        finally:server.shutdown();server.server_close();app.pool.shutdown(wait=True);thread.join()
+
+    def request(self,base,path,data=None,headers=None):
+        from urllib.request import Request,urlopen
+        payload=None if data is None else json.dumps(data).encode()
+        with urlopen(Request(base+path,data=payload,headers=headers or {}),timeout=5) as response:
+            return json.load(response)
+
+    def test_discovery_keeps_default_settings_and_isolates_alternatives(self):
+        from serve import available_models
+        default=SimpleNamespace(cli='copilot',extra=['--model','configured'],mode='print',timeout=37)
+        def factory(cli,**kwargs):return SimpleNamespace(cli=cli,**kwargs)
+        with patch('serve.shutil.which',side_effect=lambda cli:'/bin/'+cli if cli in {'copilot','claude'} else None), \
+             patch('serve.CLIModel',side_effect=factory) as create:
+            models=available_models(default)
+        self.assertEqual(list(models),['copilot','claude'])
+        self.assertIs(models['copilot'],default)
+        create.assert_called_once_with('claude',timeout=37)
+        self.assertEqual(default.extra,['--model','configured']);self.assertEqual(default.mode,'print')
+        custom=SimpleNamespace(cli='/custom/llm',extra=['private-option'],mode='codex',timeout=91)
+        with patch('serve.shutil.which',return_value=None),patch('serve.CLIModel') as create:
+            self.assertEqual(available_models(custom),{'/custom/llm':custom})
+        create.assert_not_called()
+
+    def test_http_selection_and_omitted_default(self):
+        from serve import App
+        default=self.model('copilot','default response');other=self.model('claude','selected response')
+        with tempfile.TemporaryDirectory() as temp:
+            bot=Assistant(ROOT/'data',temp,default)
+            app=App(bot,{'claude':other})
+            with self.web_app(app) as base:
+                config=self.request(base,'/api/config')
+                self.assertEqual(config['cli'],'copilot')
+                self.assertEqual(config['available_clis'],['copilot','claude'])
+                headers={'Content-Type':'application/json','X-Local-Token':config['token']}
+                first=self.request(base,'/api/ask',{'question':'first','cli':'claude'},headers)['job_id']
+                second=self.request(base,'/api/ask',{'question':'second'},headers)['job_id']
+                app.pool.shutdown(wait=True)
+                for ident,cli,expected in [(first,'claude','selected response'),(second,'copilot','default response')]:
+                    job=self.request(base,'/api/jobs/'+ident,headers=headers)
+                    self.assertEqual(job['status'],'success');self.assertEqual(job['cli'],cli)
+                    self.assertEqual(job['result']['cli'],cli)
+                    self.assertEqual(job['result']['answer']['unknowns'],[expected])
+                self.assertEqual(other.states[0]['question'],'first')
+                self.assertEqual(default.states[0]['question'],'second')
+                self.assertIs(bot.model,default)
+
+    def test_invalid_selection_and_local_auth_do_not_allocate_jobs(self):
+        from urllib.error import HTTPError
+        from serve import App
+        with tempfile.TemporaryDirectory() as temp:
+            model=self.model('copilot','unused');app=App(Assistant(ROOT/'data',temp,model))
+            with self.web_app(app) as base:
+                headers={'Content-Type':'application/json','X-Local-Token':app.token}
+                for cli in ['missing','/bin/sh','copilot; echo unsafe','',None,[],{},1,True]:
+                    with self.subTest(cli=cli),self.assertRaises(HTTPError) as error:
+                        self.request(base,'/api/ask',{'question':'test','cli':cli},headers)
+                    self.assertEqual(error.exception.code,400);error.exception.close()
+                for changed in [{'X-Local-Token':'invalid'},{'Origin':'https://untrusted.example'},{'Host':'untrusted.example'}]:
+                    with self.subTest(changed=changed),self.assertRaises(HTTPError) as error:
+                        self.request(base,'/api/ask',{'question':'test','cli':'copilot'},{**headers,**changed})
+                    self.assertEqual(error.exception.code,403);error.exception.close()
+                self.assertEqual(app.jobs,{});self.assertEqual(model.states,[])
+
+    def test_queued_jobs_and_all_rounds_retain_their_selected_model(self):
+        from serve import App
+        started=threading.Event();release=threading.Event()
+        other=ScriptedModel([
+            {'type':'tools','calls':[{'tool':'read_document','arguments':{'doc_id':'ARCH-01:v1','section':'§3'}}]},
+            {'type':'answer','claims':[{'text':'담당 팀 근거','kind':'fact','citations':['E1']}],'unknowns':[]}
+        ]);other.cli='claude'
+        complete=other.complete
+        def blocked_complete(state,folder,index):
+            if index==1:
+                started.set()
+                if not release.wait(5):raise RuntimeError('test release timed out')
+            return complete(state,folder,index)
+        other.complete=blocked_complete
+        default=self.model('copilot','second model')
+        with tempfile.TemporaryDirectory() as temp:
+            bot=Assistant(ROOT/'data',temp,default);app=App(bot,{'claude':other})
+            try:
+                first=app.submit('first','S1b',[],'claude')
+                self.assertTrue(started.wait(5))
+                second=app.submit('second','S1b',[],'copilot')
+                self.assertEqual(app.jobs[second]['status'],'queued')
+                with self.assertRaisesRegex(ValueError,'처리 중인 질문'):
+                    app.submit('third','S1b',[],'claude')
+                self.assertIs(bot.model,default);self.assertEqual(default.states,[])
+            finally:release.set();app.pool.shutdown(wait=True)
+            self.assertEqual([s['question'] for s in other.states],['first','first'])
+            self.assertEqual([s['question'] for s in default.states],['second'])
+            for ident,cli in [(first,'claude'),(second,'copilot')]:
+                result=app.jobs[ident]['result'];self.assertEqual(result['cli'],cli)
+                folder=Path(temp)/result['run_id']
+                for filename in ['run.json','answer.json']:
+                    self.assertEqual(json.loads((folder/filename).read_text())['cli'],cli)
+
+    def test_model_failure_records_selected_cli_without_changing_default(self):
+        from serve import App
+        default=self.model('copilot','unused');other=self.model('claude','unused')
+        other.complete=lambda *args:(_ for _ in ()).throw(RuntimeError('synthetic login required'))
+        with tempfile.TemporaryDirectory() as temp:
+            bot=Assistant(ROOT/'data',temp,default);app=App(bot,{'claude':other})
+            ident=app.submit('test','S1b',[],'claude');app.pool.shutdown(wait=True)
+            job=app.jobs[ident];self.assertEqual(job['status'],'error');self.assertEqual(job['cli'],'claude')
+            self.assertIn('synthetic login required',job['message'])
+            record=json.loads(next(Path(temp).glob('*/run.json')).read_text())
+            self.assertEqual(record['cli'],'claude');self.assertEqual(record['status'],'error')
+            self.assertIs(bot.model,default);self.assertEqual(default.states,[])
 
 if __name__=='__main__':unittest.main()

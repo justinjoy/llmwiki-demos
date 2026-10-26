@@ -68,14 +68,16 @@ class Assistant:
         self.runs_dir=Path(runs_dir).resolve();self.runs_dir.mkdir(parents=True,exist_ok=True)
         self.model=model;self.max_rounds=max_rounds;self.max_tools=max_tools
 
-    def ask(self,question,snapshot='S1b',history=None,progress=None):
+    def ask(self,question,snapshot='S1b',history=None,progress=None,*,model=None):
         if not isinstance(question,str) or not 1<=len(question.strip())<=4000:raise ValueError('질문은 1~4000자로 입력하세요.')
         if snapshot not in self.graph.snapshots:raise ValueError('알 수 없는 스냅샷')
         question=question.strip();progress=progress or (lambda _:None)
+        active_model=self.model if model is None else model
         run_dir=Path(tempfile.mkdtemp(prefix=datetime.now().strftime('%Y%m%d-%H%M%S-'),dir=self.runs_dir))
         evidence={};keys={};seen=set();observations=[];calls=[];errors=0
         meta={'status':'running','question':question,'snapshot':snapshot,'created_at':datetime.now(timezone.utc).isoformat(),
-              'engine':'pyrewire','engine_version':version('pyrewire'),'mode':'llm_selected_read_tools','run_id':run_dir.name}
+              'engine':'pyrewire','engine_version':version('pyrewire'),'cli':getattr(active_model,'cli','unknown'),
+              'mode':'llm_selected_read_tools','run_id':run_dir.name}
         write_json(run_dir/'run.json',meta)
         def register(item):
             key=json.dumps(item,sort_keys=True,ensure_ascii=False)
@@ -90,7 +92,7 @@ class Assistant:
                   'remaining_tool_calls':self.max_tools-len(calls),'must_answer':round_id==self.max_rounds or len(calls)>=self.max_tools,
                   'observations':observations,'evidence':evidence}
                 try:
-                    response=self.model.complete(state,run_dir,round_id)
+                    response=active_model.complete(state,run_dir,round_id)
                     if not isinstance(response,dict):raise ValueError('JSON 객체가 필요합니다.')
                     if response.get('type')=='answer':
                         answer=self.validate_answer(response,evidence)

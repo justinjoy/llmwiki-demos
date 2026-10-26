@@ -7,33 +7,50 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import json
 from pathlib import Path
 import secrets
+import shutil
 import threading
 from urllib.parse import urlsplit
 from llmwiki.agent import Assistant,CLIModel
 ROOT=Path(__file__).resolve().parent
+SUPPORTED_CLIS=('agy','claude','codex','cursor-agent','copilot')
+DEFAULT_CLI=object()
+
+def available_models(default_model):
+    """Discover supported executables; retain operator settings only on the default."""
+    models={default_model.cli:default_model}
+    for cli in SUPPORTED_CLIS:
+        if cli not in models and shutil.which(cli):
+            models[cli]=CLIModel(cli,timeout=default_model.timeout)
+    return models
 
 class App:
-    def __init__(self,bot):
+    def __init__(self,bot,models=None):
         self.bot=bot;self.token=secrets.token_urlsafe(32);self.jobs={};self.lock=threading.Lock()
+        self.default_cli=bot.model.cli
+        self.models={self.default_cli:bot.model}
+        self.models.update({cli:model for cli,model in (models or {}).items() if cli!=self.default_cli})
         self.pool=ThreadPoolExecutor(max_workers=1)
-    def submit(self,question,snapshot,history):
+    def submit(self,question,snapshot,history,cli=DEFAULT_CLI):
         if not isinstance(question,str) or not 1<=len(question.strip())<=4000:raise ValueError('질문은 1~4000자로 입력하세요.')
         if snapshot not in self.bot.graph.snapshots:raise ValueError('스냅샷 오류')
         if not isinstance(history,list) or len(history)>3 or len(json.dumps(history,ensure_ascii=False))>18000:raise ValueError('대화 이력이 너무 큽니다. 새 대화로 시작하세요.')
+        if cli is DEFAULT_CLI:cli=self.default_cli
+        if not isinstance(cli,str) or cli not in self.models:raise ValueError('사용 가능한 CLI 목록에서 선택하세요.')
+        model=self.models[cli]
         with self.lock:
             if sum(j['status'] in ('queued','running') for j in self.jobs.values())>=2:raise ValueError('처리 중인 질문이 있습니다. 완료 후 다시 시도하세요.')
             if len(self.jobs)>=40:
                 for key in list(self.jobs):
                     if self.jobs[key]['status'] not in ('queued','running'):del self.jobs[key];break
-            ident=secrets.token_hex(12);self.jobs[ident]={'status':'queued','events':[]}
-        self.pool.submit(self.run,ident,question,snapshot,history)
+            ident=secrets.token_hex(12);self.jobs[ident]={'status':'queued','events':[],'cli':cli}
+        self.pool.submit(self.run,ident,question,snapshot,history,model)
         return ident
-    def run(self,ident,question,snapshot,history):
+    def run(self,ident,question,snapshot,history,model):
         def event(text):
             with self.lock:self.jobs[ident]['events'].append(text)
         with self.lock:self.jobs[ident]['status']='running'
         try:
-            result=self.bot.ask(question,snapshot,history,event)
+            result=self.bot.ask(question,snapshot,history,event,model=model)
             with self.lock:self.jobs[ident].update(status='success',result=result)
         except Exception as exc:
             with self.lock:self.jobs[ident].update(status='error',message=str(exc))
@@ -58,7 +75,7 @@ def handler_for(app):
             files={'/':('index.html','text/html; charset=utf-8'),'/app.js':('app.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8')}
             if path in files:
                 f,t=files[path];return self.send(200,(ROOT/'web'/f).read_bytes(),t)
-            if path=='/api/config':return self.send(200,{'token':app.token,'engine':f"PyreWire {version('pyrewire')}",'cli':app.bot.model.cli,'documents':len(app.bot.corpus.docs)})
+            if path=='/api/config':return self.send(200,{'token':app.token,'engine':f"PyreWire {version('pyrewire')}",'cli':app.default_cli,'available_clis':list(app.models),'documents':len(app.bot.corpus.docs)})
             if path.startswith('/api/jobs/'):
                 if self.headers.get('X-Local-Token')!=app.token:return self.send(403,{'error':'세션 토큰 오류'})
                 with app.lock:
@@ -73,7 +90,7 @@ def handler_for(app):
                 if not 0<length<=65536:raise ValueError('요청 크기 오류')
                 data=json.loads(self.rfile.read(length))
                 if not isinstance(data,dict):raise ValueError('JSON 객체가 필요합니다.')
-                ident=app.submit(data.get('question'),data.get('snapshot','S1b'),data.get('history',[]))
+                ident=app.submit(data.get('question'),data.get('snapshot','S1b'),data.get('history',[]),data.get('cli',app.default_cli))
             except (ValueError,TypeError) as exc:return self.send(400,{'error':str(exc)})
             self.send(202,{'job_id':ident})
     return Handler
@@ -86,7 +103,7 @@ def main():
     a=p.parse_args()
     if not 1<=a.port<=65535 or a.timeout<=0:p.error('port/timeout 값을 확인하세요.')
     bot=Assistant(ROOT/'data',ROOT/'runs',CLIModel(a.cli,a.cli_arg,a.timeout,a.mode))
-    app=App(bot);server=ThreadingHTTPServer(('127.0.0.1',a.port),handler_for(app))
+    app=App(bot,available_models(bot.model));server=ThreadingHTTPServer(('127.0.0.1',a.port),handler_for(app))
     print(f'LLMWiki + PyreWire: http://127.0.0.1:{a.port}  (LLM: {a.cli})',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
