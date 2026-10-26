@@ -2,7 +2,7 @@
 
 업무 원문에서 직접 호출 후보·별칭·개체를 추출하고, 사람이 검토한 사실을 다음 교시 입력으로 분리합니다.
 
-Python 3.9 이상과 로그인된 LLM CLI가 필요합니다. Wirelog 설치 없이 이 폴더만으로 실행할 수 있습니다. 2교시 타입·관계 사전의 복사본을 `ontology/`에 보관하고 모든 LLM 단계의 입력에 포함합니다. `svc:` 접두사는 표준 서비스 ID를 사용하기 위해 제외합니다.
+Python 3.9 이상과 로그인된 LLM CLI가 필요합니다. Wirelog 설치 없이 이 폴더만으로 실행할 수 있습니다. 2교시 모델의 타입·관계 규칙을 추출용 사전으로 정리한 `ontology/`를 모든 LLM 단계의 입력에 포함합니다. 사전에는 구체적인 호출 관계·담당 팀·타임아웃 정답 대신 일반 정의와 포함·제외 기준을 둡니다. `svc:` 접두사는 표준 서비스 ID를 사용하기 위해 제외합니다.
 
 ## 첫 실행
 
@@ -15,6 +15,10 @@ python3 validate_assertions.py assertions.jsonl --status pending
 ```
 
 `--dry-run`은 실제 프롬프트와 원문을 `runs/`에 만들고 LLM은 호출하지 않습니다. 실제 실행은 원문 5개·온톨로지 사전과 `prompt.txt`를 `agy -p`로 전달하고 응답을 `assertions.jsonl`에 저장합니다. 기존 내용은 실행 기록의 `previous.jsonl`에 백업합니다.
+
+`prompt.txt`는 추출 질문·절차·JSONL 스키마를 제공합니다. 운영 기준 문서와 버전, 호출 주체·대상·개수, 근거 절과 적용 범위는 원문에서 판단합니다. 같은 직접 관계가 반복되면 명확한 대표 운영 근거를 선택하고, 그 문서의 호출 설명 순서에 따라 `F01`부터 순번을 부여합니다. `S1`은 실습 식별자이고 `pending`·빈 검토자는 사람 검토 전 상태입니다. 기존 후보·정답 예시·검토 이력은 `extract`의 LLM 입력에 포함하지 않습니다.
+
+생성 후 실행기는 원문 인용과 스키마를 검사하고 교육용 기대 ID 집합(`F01`~`F03`)을 확인합니다. 이 검사는 LLM에 추출 개수나 사실의 정답을 미리 지시하는 것과 별개입니다. 인용이 주장을 실제로 뒷받침하는지, 방향과 의미가 맞는지는 사람이 검토해야 합니다. 원문이 바뀌어 후보 수가 달라지면 교육용 검증 조건도 함께 점검해야 합니다.
 
 검사에서 오류가 나오면 원문과 대조해 후보 파일을 수정한 뒤 다시 검사합니다. 배포된 TODO 템플릿과 빈 `approved.jsonl`이 검사에 실패하는 것은 정상입니다.
 
@@ -88,6 +92,8 @@ python3 run_lesson3.py --cli agy --task review --overwrite
 
 `review_suggestions.md`는 LLM의 검토 제안이며 최종 판정은 사람이 합니다. 이제 **반려·보류 → 내용 수정 또는 재검토 요청 → 새 버전 검토**를 지원합니다. [후보별 수정·재검토 안내](REVIEW_WORKFLOW.md)를 따라 진행하세요.
 
+검토 프롬프트는 특정 후보의 오류 유형이나 권고 판정을 지정하지 않습니다. 실제 입력의 각 주장을 같은 기준으로 대조하여 판정과 근거를 작성합니다. 개체 추출도 앞 단계 후보를 원문과 다시 대조하고 현재 운영 개체·API·담당·타임아웃을 찾습니다. 별칭 단계는 용어집의 명시적 동일성 근거를 요구합니다.
+
 ```sh
 python3 review_workflow.py init
 python3 review_workflow.py list
@@ -148,7 +154,7 @@ CSV 저장만으로 판정이 반영되지는 않습니다. `import-review`가 D
 `-p`는 프롬프트 파일, `-c`는 참고 원문, `-o`는 결과 파일입니다.
 
 ```sh
-python3 run_prompt.py --cli agy -p prompt.txt -c raw/ARCH-01_v1.md -c raw/ADR-07_v1.md -c raw/INC-03_v1.md -c raw/GLOSS-01_v1.md -c raw/ARCH-01_v2.md -o assertions.jsonl --overwrite
+python3 run_prompt.py --cli agy -p prompt.txt -c raw/ARCH-01_v1.md -c raw/ADR-07_v1.md -c raw/INC-03_v1.md -c raw/GLOSS-01_v1.md -c raw/ARCH-01_v2.md -c ontology/types.csv -c ontology/relations.csv -o assertions.jsonl --overwrite
 ```
 
 입력은 `runs/날짜-고유번호/input.txt`, 응답은 `stdout.txt`, 오류는 `stderr.txt`, 실행 상태는 `run.json`에 기록합니다. CLI 실패·빈 응답·시간 초과 시 기존 결과를 교체하지 않습니다. 기본 제한은 호출당 300초이며 `--timeout 600`처럼 바꿀 수 있습니다.
