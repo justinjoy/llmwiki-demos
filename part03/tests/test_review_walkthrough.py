@@ -45,7 +45,7 @@ class CsvWalkthroughTests(unittest.TestCase):
                     self.assertEqual(row['status'], 'pending')
                     edits = {'F03': ('rejected', 'ARCH-01 v1 §2: 호출 방향 반대')}
                 else:
-                    with (ROOT / 'review.example.csv').open(newline='') as stream:
+                    with (ROOT / 'review.example.csv').open(newline='', encoding='utf-8') as stream:
                         edits = {r['id']: (r['판정'], r['근거 또는 이유']) for r in csv.DictReader(stream)}
                 edit_sheet(work / 'review.csv', edits)
                 return ''
@@ -62,7 +62,7 @@ class CsvWalkthroughTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             for name in ('assertions.jsonl', 'aliases.json', 'entities.json', 'error_candidates.json'):
-                (root / name).write_text('{}')
+                (root / name).write_text('{}', encoding='utf-8')
             store = Mock()
             store.db.exists.return_value = False
             store.sheet = root / 'review.csv'

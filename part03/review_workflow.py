@@ -91,7 +91,7 @@ class Store:
             p=json.loads(line);ident=p.get('assertion_id')
             if not isinstance(ident,str) or not ident or ident in result:raise ValueError('중복·빈 추출 ID')
             result[ident]=('assertion',validate_candidate(self.root,ident,'assertion',p))
-        for p in json.loads((self.root/'error_candidates.json').read_text()):
+        for p in json.loads((self.root/'error_candidates.json').read_text(encoding='utf-8')):
             ident=p.get('id')
             if not isinstance(ident,str) or not ident or ident in result:raise ValueError('중복·빈 오류 예문 ID')
             result[ident]=('error_example',validate_candidate(self.root,ident,'error_example',p))
@@ -307,7 +307,7 @@ def verify_export_file(path):
     managed=db.exists() or meta.exists() or any('candidate_revision' in r for r in rows)
     if not managed:return rows  # Separately supplied unversioned approved input.
     if not db.exists() or not meta.exists():raise ValueError('버전 관리된 승인 파일은 검토 DB·메타데이터와 함께 사용하세요.')
-    m=json.loads(meta.read_text());store=Store(path.parent.parent if m.get('example') else path.parent,bool(m.get('example')))
+    m=json.loads(meta.read_text(encoding='utf-8'));store=Store(path.parent.parent if m.get('example') else path.parent,bool(m.get('example')))
     with store.connect() as con:
         store.check_sources(con);current=store.rows(con)
         heads={r['id']:{'revision':r['revision'],'sha256':r['content_sha'],'status':r['status']} for r in current}
@@ -351,7 +351,7 @@ def main():
             else:print(text)
         elif args.command in ('revise','reopen'):
             revision=store.revise(args.id,args.revision,args.actor,args.reason,
-              json.loads(args.file.read_text()) if args.command=='revise' else None,getattr(args,'kind',None),args.command=='reopen')
+              json.loads(args.file.read_text(encoding='utf-8')) if args.command=='revise' else None,getattr(args,'kind',None),args.command=='reopen')
             print(f'{args.id} r{revision}: pending. 새 버전을 검토하세요.')
         elif args.command=='decide':print('저장된 판정:',store.decide(args.id,args.revision,args.status,args.reviewer,args.reason))
         else:print('저장된 판정:',store.import_csv(args.file))

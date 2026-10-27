@@ -3,15 +3,21 @@ import argparse
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import run_prompt
 
 
 class PromptRunnerTests(unittest.TestCase):
     def setUp(self):
+        # Fake Python CLIs emit the same UTF-8 protocol as the real adapters.
+        child_encoding = patch.dict(os.environ, PYTHONIOENCODING='utf-8')
+        child_encoding.start()
+        self.addCleanup(child_encoding.stop)
         self.temp = tempfile.TemporaryDirectory(prefix="한글 실습 ")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
@@ -37,33 +43,33 @@ class PromptRunnerTests(unittest.TestCase):
         output.write_text("기존 기록", encoding="utf-8")
         self.args.overwrite = True
         self.assertEqual(self.execute(), 0)
-        self.assertEqual(output.read_text(), "# 결과\n검토 전 초안\n")
-        self.assertEqual((self.latest() / "previous.md").read_text(), "기존 기록")
-        self.assertEqual(self.raw.read_text(), "원문 3초\n인용과 절")
-        self.assertEqual(json.loads((self.latest() / "run.json").read_text())["status"], "success")
+        self.assertEqual(output.read_text(encoding='utf-8'), "# 결과\n검토 전 초안\n")
+        self.assertEqual((self.latest() / "previous.md").read_text(encoding='utf-8'), "기존 기록")
+        self.assertEqual(self.raw.read_text(encoding='utf-8'), "원문 3초\n인용과 절")
+        self.assertEqual(json.loads((self.latest() / "run.json").read_text(encoding='utf-8'))["status"], "success")
 
     def test_existing_file_requires_overwrite(self):
-        Path(self.args.output).write_text("keep")
+        Path(self.args.output).write_text("keep", encoding='utf-8')
         with self.assertRaises(ValueError):
             self.execute()
         self.assertFalse((self.root / "runs").exists())
 
     def test_failed_cli_preserves_file(self):
-        self.fake.write_text("import sys\nprint('partial')\nprint('login required',file=sys.stderr)\nsys.exit(7)")
-        Path(self.args.output).write_text("keep")
+        self.fake.write_text("import sys\nprint('partial')\nprint('login required',file=sys.stderr)\nsys.exit(7)", encoding='utf-8')
+        Path(self.args.output).write_text("keep", encoding='utf-8')
         self.args.overwrite = True
         self.assertEqual(self.execute(), 7)
-        self.assertEqual(Path(self.args.output).read_text(), "keep")
-        self.assertIn("login required", (self.latest() / "stderr.txt").read_text())
+        self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'), "keep")
+        self.assertIn("login required", (self.latest() / "stderr.txt").read_text(encoding='utf-8'))
 
     def test_empty_response(self):
-        self.fake.write_text("print('   ')")
+        self.fake.write_text("print('   ')", encoding='utf-8')
         with self.assertRaises(ValueError):
             self.execute()
         self.assertFalse(Path(self.args.output).exists())
 
     def test_timeout(self):
-        self.fake.write_text("import time\ntime.sleep(5)")
+        self.fake.write_text("import time\ntime.sleep(5)", encoding='utf-8')
         self.args.timeout = 0.1
         self.assertEqual(self.execute(), 124)
         self.assertFalse(Path(self.args.output).exists())
@@ -72,7 +78,7 @@ class PromptRunnerTests(unittest.TestCase):
         self.args.cli = "this-cli-is-not-installed"
         self.args.dry_run = True
         self.assertEqual(self.execute(), 0)
-        self.assertIn("원문 3초", (self.latest() / "input.txt").read_text())
+        self.assertIn("원문 3초", (self.latest() / "input.txt").read_text(encoding='utf-8'))
         self.assertFalse(Path(self.args.output).exists())
 
     def test_missing_context_stops_before_call(self):

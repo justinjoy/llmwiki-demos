@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import sqlite3
@@ -15,7 +16,7 @@ class ReviewTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
         for f in ['assertions.jsonl','error_candidates.json']:shutil.copy2(ROOT/f,self.root/f)
-        (self.root/'review.csv').write_text('id,판정,근거 또는 이유,검토자\n'+''.join(f'{i},pending,,\n' for i in ['F01','F02','F03',*[f'E{x:02}' for x in range(1,7)]]))
+        (self.root/'review.csv').write_text('id,판정,근거 또는 이유,검토자\n'+''.join(f'{i},pending,,\n' for i in ['F01','F02','F03',*[f'E{x:02}' for x in range(1,7)]]), encoding='utf-8')
         shutil.copytree(ROOT/'raw',self.root/'raw')
         self.store=Store(self.root);self.store.init()
     def tearDown(self):self.temp.cleanup()
@@ -29,9 +30,9 @@ class ReviewTests(unittest.TestCase):
         original=json.loads(self.row('F03')['payload'])
         self.store.revise('F03',1,'테스트','별도 폴더 후보 구분',dict(original,subject='ledger',object='pay'))
         before=self.store.sheet.read_bytes()
-        result=subprocess.run([sys.executable,str(ROOT/'review_workflow.py'),'--root',str(self.root),'show','F03'],capture_output=True,text=True,check=True)
+        result=subprocess.run([sys.executable,str(ROOT/'review_workflow.py'),'--root',str(self.root),'show','F03'],capture_output=True,text=True,encoding='utf-8',env=dict(os.environ,PYTHONIOENCODING='utf-8'),check=True)
         shown=json.loads(result.stdout)
-        with self.store.sheet.open() as f:
+        with self.store.sheet.open(encoding='utf-8') as f:
             csv_row=next(r for r in csv.DictReader(f) if r['id']=='F03')
         self.assertEqual(str(shown['revision']),csv_row['revision'])
         self.assertEqual(shown['content_sha'],csv_row['content_sha256'])
@@ -39,7 +40,7 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(self.store.sheet.read_bytes(),before)
 
     def test_prefilled_reasons_allow_partial_import_without_false_decisions(self):
-        with self.store.sheet.open() as f:rows=list(csv.DictReader(f))
+        with self.store.sheet.open(encoding='utf-8') as f:rows=list(csv.DictReader(f))
         self.assertTrue(all(r['근거 또는 이유'] and r['판정']=='pending' and not r['검토자'] for r in rows))
         for r in rows:
             if r['id']=='F01':r.update(판정='approved',검토자='실제 검토자')
@@ -48,30 +49,30 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(self.row('F01')['status'],'approved')
         self.assertEqual(self.row('E02')['review_reason'],'')
         self.assertIsNone(self.store.history('E02')[0]['status'])
-        with self.store.sheet.open() as f:saved={r['id']:r for r in csv.DictReader(f)}
+        with self.store.sheet.open(encoding='utf-8') as f:saved={r['id']:r for r in csv.DictReader(f)}
         self.assertEqual(saved['E02']['근거 또는 이유'],'검토자가 작성 중인 근거 초안')
         original=json.loads(self.row('E02')['payload'])
         self.store.revise('E02',1,'수정자','새 주장',dict(original,claim='새로운 주장'))
-        with self.store.sheet.open() as f:updated={r['id']:r for r in csv.DictReader(f)}
+        with self.store.sheet.open(encoding='utf-8') as f:updated={r['id']:r for r in csv.DictReader(f)}
         self.assertNotEqual(updated['E02']['근거 또는 이유'],'검토자가 작성 중인 근거 초안')
         self.assertIn('수정된 예문',updated['E02']['근거 또는 이유'])
         with self.assertRaises(ValueError):self.store.export(True)
 
     def test_prefill_keeps_unsaved_decision_and_user_reason(self):
-        with self.store.sheet.open() as f:rows=list(csv.DictReader(f))
+        with self.store.sheet.open(encoding='utf-8') as f:rows=list(csv.DictReader(f))
         rows[0].update(판정='rejected',검토자='작성 중인 검토자',**{'근거 또는 이유':'직접 작성한 이유'})
         rows[-1]['근거 또는 이유']=''
-        with self.store.sheet.open('w',newline='') as f:
+        with self.store.sheet.open('w',newline='', encoding='utf-8') as f:
             w=csv.DictWriter(f,fieldnames=FIELDS);w.writeheader();w.writerows(rows)
         self.store.prefill_reasons()
-        with self.store.sheet.open() as f:result=list(csv.DictReader(f))
+        with self.store.sheet.open(encoding='utf-8') as f:result=list(csv.DictReader(f))
         self.assertEqual(result[0],rows[0])
         self.assertTrue(result[-1]['근거 또는 이유'])
         self.assertTrue(all(r['status']=='pending' for r in self.store.current()))
 
     def test_initial_pending_and_versioned_csv(self):
         self.assertTrue(all(r['status']=='pending' and r['revision']==1 for r in self.store.current()))
-        with self.store.sheet.open() as f:self.assertEqual(next(csv.reader(f)),FIELDS)
+        with self.store.sheet.open(encoding='utf-8') as f:self.assertEqual(next(csv.reader(f)),FIELDS)
         self.assertTrue(list((self.root/'.review/backups').glob('review-*.csv')))
     def test_reject_correct_reapprove_history(self):
         original=json.loads(self.row('F03')['payload']);bad=dict(original,subject='ledger',object='pay')
@@ -92,7 +93,7 @@ class ReviewTests(unittest.TestCase):
         self.finish();self.store.export(True)
         p=json.loads(self.row('F03')['payload']);p['scope']+=' / 범위 확인'
         self.store.revise('F03',1,'편집자','범위 변경',p)
-        self.assertEqual((self.root/'approved.jsonl').read_text(),'')
+        self.assertEqual((self.root/'approved.jsonl').read_text(encoding='utf-8'),'')
         with self.assertRaises(ValueError):verify_export_file(self.root/'approved.jsonl')
         with self.assertRaises(ValueError):self.store.export(True)
     def test_stale_csv_even_when_reopened_content_same(self):
@@ -123,8 +124,8 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(self.row('E01')['kind'],'assertion')
     def test_external_source_change_blocks_consumption_until_sync(self):
         self.finish();self.store.export(True)
-        lines=[json.loads(s) for s in (self.root/'assertions.jsonl').read_text().splitlines()];lines[0]['scope']+=' / 새 추출'
-        (self.root/'assertions.jsonl').write_text(''.join(json.dumps(r,ensure_ascii=False)+'\n' for r in lines))
+        lines=[json.loads(s) for s in (self.root/'assertions.jsonl').read_text(encoding='utf-8').splitlines()];lines[0]['scope']+=' / 새 추출'
+        (self.root/'assertions.jsonl').write_text(''.join(json.dumps(r,ensure_ascii=False)+'\n' for r in lines), encoding='utf-8')
         with self.assertRaises(ValueError):verify_export_file(self.root/'approved.jsonl')
         self.assertEqual(self.store.sync('LLM 테스트','재추출'),['F01']);self.assertEqual(self.row('F01')['status'],'pending')
     def test_manual_revision_is_not_overwritten_by_unchanged_source(self):
@@ -137,10 +138,10 @@ class ReviewTests(unittest.TestCase):
             with self.assertRaises(sqlite3.IntegrityError):
                 with self.store.connect() as con:con.execute(f'DELETE FROM {table}')
     def test_legacy_csv_cannot_silently_approve(self):
-        p=self.root/'legacy.csv';p.write_text('id,판정,근거 또는 이유,검토자\nF01,approved,이유,검토자\n')
+        p=self.root/'legacy.csv';p.write_text('id,판정,근거 또는 이유,검토자\nF01,approved,이유,검토자\n', encoding='utf-8')
         with self.assertRaises(ValueError):self.store.import_csv(p)
     def test_atomic_review_batch_rejects_stale_row(self):
-        with self.store.sheet.open() as f:rows=list(csv.DictReader(f))
+        with self.store.sheet.open(encoding='utf-8') as f:rows=list(csv.DictReader(f))
         for r in rows:
             if r['id']=='F01':r.update(판정='approved',검토자='검토자',**{'근거 또는 이유':'원문 확인'})
             if r['id']=='F02':r['revision']='99'
@@ -149,10 +150,10 @@ class ReviewTests(unittest.TestCase):
     def test_partial_review_is_saved_without_publishing(self):
         self.store.decide('F01',1,'approved','검토자','원문 확인')
         with self.assertRaises(ValueError):self.store.export(True)
-        self.assertEqual(self.row('F01')['status'],'approved');self.assertEqual((self.root/'approved.jsonl').read_text(),'')
+        self.assertEqual(self.row('F01')['status'],'approved');self.assertEqual((self.root/'approved.jsonl').read_text(encoding='utf-8'),'')
     def test_export_hash_tampering_detected(self):
         self.finish();self.store.export(True)
-        p=self.root/'approved.jsonl';p.write_text(p.read_text()+'\n')
+        p=self.root/'approved.jsonl';p.write_text(p.read_text(encoding='utf-8')+'\n', encoding='utf-8')
         with self.assertRaises(ValueError):verify_export_file(p)
     def test_detached_managed_export_is_rejected(self):
         self.finish();self.store.export(True)

@@ -60,7 +60,7 @@ def main():
         report('[검증 완료] direct가 승인 관계와 일치하고 pay_doc이 ARCH-01:v1, INC-03:v1과 일치합니다.')
     if a.task in ['extend','all']:
         report(f'[추가 질의] 규칙 읽기: {ROOT/"queries.dl"}')
-        rules=(ROOT/'queries.dl').read_text()
+        rules=(ROOT/'queries.dl').read_text(encoding='utf-8')
         report('  order_doc은 order와 연결된 문서, shop_dep은 shop의 직접 의존 대상을 조회합니다.')
         for line in rules.splitlines(): report('    '+line)
         report('[실행] PyreWire로 기본 모델과 추가 질의 규칙을 함께 평가합니다.')

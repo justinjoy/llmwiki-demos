@@ -20,7 +20,7 @@ def run(snapshot, data=None, progress=None):
     report(f'[문서 준비] 원문 절 저장소 읽기: {ROOT/"common/documents.json"}')
     docs=json.loads((ROOT/'common/documents.json').read_text(encoding='utf-8'))
     report('[엔진 실행] PyreWire evaluate(model, facts, rules): 승인 사실을 Datalog로 투영하고 구조 질의를 평가합니다.')
-    result=evaluate((ROOT/'common/model.dl').read_text(),facts_text(data),(ROOT/'common/rules.dl').read_text())
+    result=evaluate((ROOT/'common/model.dl').read_text(encoding='utf-8'),facts_text(data),(ROOT/'common/rules.dl').read_text(encoding='utf-8'))
     report(f"[엔진 완료] {result['engine']} {result['engine_version']} · {result['api']}")
     report('[도구 실행] 후보·문서 조회는 위 평가 결과를 사용하고, 원문 읽기와 경로 추적은 Python에서 수행합니다.')
     rel=result['relations'];log=[]

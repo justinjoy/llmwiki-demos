@@ -12,7 +12,7 @@ def main():
     tasks=list(TASKS) if a.task=='all' else [a.task]
     if not a.overwrite and not a.dry_run and any((ROOT/TASKS[t][1]).exists() for t in tasks): p.error('기존 결과가 있습니다. --overwrite로 백업 후 실행하세요.')
     if not a.dry_run and ('evidence' in tasks or not (ROOT/'input.json').exists()):
-        result=engine(ROOT,snapshot('S1'),(ROOT/'model.dl').read_text(),(ROOT/'rules.dl').read_text(),output='S1_result.json')
+        result=engine(ROOT,snapshot('S1'),(ROOT/'model.dl').read_text(encoding='utf-8'),(ROOT/'rules.dl').read_text(encoding='utf-8'),output='S1_result.json')
         save(ROOT,'input.json',{'snapshot_id':'S1','candidates':[r[0] for r in result['relations']['candidate']],
               'initial_doc_ids':sorted({r[1] for r in result['relations']['candidate_doc']}),
               'candidate_doc':result['relations']['candidate_doc'],'rule_id':'candidate-v1','paths':result['paths']})

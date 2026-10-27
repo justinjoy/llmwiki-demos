@@ -3,6 +3,7 @@ import argparse
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -15,12 +16,12 @@ import run_lesson1
 FAKE = r'''
 import json,sys
 from pathlib import Path
-config=json.loads(Path(__file__).with_suffix('.json').read_text())
+config=json.loads(Path(__file__).with_suffix('.json').read_text(encoding='utf-8'))
 p=sys.argv[sys.argv.index('-p')+1]
 blocks=json.loads(p.split('참고 파일(JSON):\n',1)[1])
 x=json.loads(blocks[0]['content'])
 stage='map' if '단계: map\n' in p else 'reduce' if '단계: reduce\n' in p else 'final'
-with Path(__file__).with_suffix('.jsonl').open('a') as f:f.write(json.dumps({'stage':stage,'prompt':p,'payload':x})+'\n')
+with Path(__file__).with_suffix('.jsonl').open('a', encoding='utf-8') as f:f.write(json.dumps({'stage':stage,'prompt':p,'payload':x})+'\n')
 if config.get('fail')==stage:sys.exit(7)
 if config.get('oversize')==stage:print('x'*16001);sys.exit()
 if stage=='map':
@@ -47,13 +48,17 @@ else:
 
 class ChunkTests(unittest.TestCase):
     def setUp(self):
+        # Fake Python CLIs emit the same UTF-8 protocol as the real adapters.
+        child_encoding = patch.dict(os.environ, PYTHONIOENCODING='utf-8')
+        child_encoding.start()
+        self.addCleanup(child_encoding.stop)
         self.tmp = tempfile.TemporaryDirectory(prefix='chunk 한글 ')
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.fake = self.root / 'fake.py'; self.fake.write_text(FAKE)
-        self.config = self.fake.with_suffix('.json'); self.config.write_text('{}')
-        self.prompt = self.root / 'prompt.txt'; self.prompt.write_text('원문으로 위키 작성. "인용"과 버전 유지.')
-        self.raw = self.root / 'raw.md'; self.raw.write_text('# 제목\n문서 번호: DOC v1\n\n## 절 1\n' + '가나다 본문.\n' * 130)
+        self.fake = self.root / 'fake.py'; self.fake.write_text(FAKE, encoding='utf-8')
+        self.config = self.fake.with_suffix('.json'); self.config.write_text('{}', encoding='utf-8')
+        self.prompt = self.root / 'prompt.txt'; self.prompt.write_text('원문으로 위키 작성. "인용"과 버전 유지.', encoding='utf-8')
+        self.raw = self.root / 'raw.md'; self.raw.write_text('# 제목\n문서 번호: DOC v1\n\n## 절 1\n' + '가나다 본문.\n' * 130, encoding='utf-8')
         self.args = argparse.Namespace(prompt=str(self.prompt), context=[str(self.raw)], output=str(self.root/'out.md'),
             source_root=str(self.root), derived_context=[], cli=sys.executable, cli_arg=[str(self.fake)], mode='print',
             timeout=5, log_dir=str(self.root/'runs'), overwrite=True, dry_run=False,
@@ -64,14 +69,14 @@ class ChunkTests(unittest.TestCase):
             return pipeline.execute(self.args, budget)
 
     def config_set(self, **kw):
-        self.config.write_text(json.dumps(kw))
+        self.config.write_text(json.dumps(kw), encoding='utf-8')
 
     def manifests(self):
-        return [json.loads(p.read_text()) for p in (self.root/'runs').glob('chunk-*/manifest.json')]
+        return [json.loads(p.read_text(encoding='utf-8')) for p in (self.root/'runs').glob('chunk-*/manifest.json')]
 
     def calls(self):
         p = self.fake.with_suffix('.jsonl')
-        return [json.loads(l) for l in p.read_text().splitlines()] if p.exists() else []
+        return [json.loads(l) for l in p.read_text(encoding='utf-8').splitlines()] if p.exists() else []
 
     def test_exact_coverage_unicode_long_lines_sections(self):
         text = '# 문서\n문서 번호: D v2\n\n## 절\n' + '한글"\\' * 1000
@@ -96,14 +101,14 @@ class ChunkTests(unittest.TestCase):
         final = calls[-1]['payload']
         self.assertNotIn('content', final)
         for e in final['evidence']:
-            self.assertIn(e['quote'], self.raw.read_text())
+            self.assertIn(e['quote'], self.raw.read_bytes().decode('utf-8'))
             self.assertEqual(e['source']['source_kind'], 'raw')
         self.assertEqual(self.raw.read_bytes(), original)
-        self.assertIn('사람 검토 전', Path(self.args.output).read_text())
+        self.assertIn('사람 검토 전', Path(self.args.output).read_text(encoding='utf-8'))
         self.assertEqual(self.manifests()[0]['status'], 'success')
 
     def test_multiple_reduction_rounds_are_bounded_and_audited(self):
-        self.raw.write_text('# 문서\n문서 번호: D v1\n\n' + ''.join('## 절 '+str(i)+'\n'+'가나다 문맥.\n'*12 for i in range(24)))
+        self.raw.write_text('# 문서\n문서 번호: D v1\n\n' + ''.join('## 절 '+str(i)+'\n'+'가나다 문맥.\n'*12 for i in range(24)), encoding='utf-8')
         self.config_set(count=2)
         self.args.max_prompt_chars=7000
         self.assertEqual(self.execute(),0)
@@ -119,26 +124,26 @@ class ChunkTests(unittest.TestCase):
         self.assertTrue(all(len(c['prompt'])<=7000 for c in calls))
         manifest=self.manifests()[0]
         self.assertTrue(manifest['omitted_ids'])
-        self.assertIn('크기 제한으로 제외',Path(self.args.output).read_text())
+        self.assertIn('크기 제한으로 제외',Path(self.args.output).read_text(encoding='utf-8'))
         self.assertEqual(len(manifest['selected_ids'])+len(manifest['omitted_ids']),sum(len(c['payload']['content'])>=0 for c in calls if c['stage']=='map')*2)
 
     def test_map_final_and_validation_failures_preserve_existing(self):
         for config in [{'fail':'map'}, {'fail':'final'}, {'badquote':True}, {'malformed':True}, {'oversize':'map'}, {'oversize':'final'}, {'badfinal':True}]:
             with self.subTest(config=config):
-                Path(self.args.output).write_text('keep')
-                self.config.write_text(json.dumps(config))
+                Path(self.args.output).write_text('keep', encoding='utf-8')
+                self.config.write_text(json.dumps(config), encoding='utf-8')
                 with self.assertRaises(ValueError):self.execute()
-                self.assertEqual(Path(self.args.output).read_text(),'keep')
+                self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'),'keep')
 
     def test_invalid_reduce_selections_and_final_failure_after_reduce(self):
-        self.raw.write_text('# 文\n' + ''.join('## 절 '+str(i)+'\n'+'long evidence 한글.\n'*12 for i in range(12)))
+        self.raw.write_text('# 文\n' + ''.join('## 절 '+str(i)+'\n'+'long evidence 한글.\n'*12 for i in range(12)), encoding='utf-8')
         self.args.max_prompt_chars=6000
         for config in [{'badkeep':x} for x in ['empty','unknown','duplicate','large']] + [{'fail':'final'}]:
             with self.subTest(config=config):
-                Path(self.args.output).write_text('keep')
-                self.config.write_text(json.dumps(config))
+                Path(self.args.output).write_text('keep', encoding='utf-8')
+                self.config.write_text(json.dumps(config), encoding='utf-8')
                 with self.assertRaises(ValueError):self.execute()
-                self.assertEqual(Path(self.args.output).read_text(),'keep')
+                self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'),'keep')
         self.assertTrue(any(c['stage']=='reduce' for c in self.calls()))
 
     def test_dry_run_no_calls_or_results_and_deferred_final(self):
@@ -148,24 +153,24 @@ class ChunkTests(unittest.TestCase):
         self.assertEqual(self.manifests()[0]['final'],'deferred_until_map_results')
         inputs=list((self.root/'runs').glob('chunk-*/*/transport/*/input.txt'))
         self.assertGreater(len(inputs),2)
-        self.assertTrue(all(len(p.read_text())<=self.args.max_prompt_chars for p in inputs))
+        self.assertTrue(all(len(p.read_text(encoding='utf-8'))<=self.args.max_prompt_chars for p in inputs))
 
     def test_call_budget_shared_across_tasks(self):
         self.args.max_calls=2
-        budget={'used':1};Path(self.args.output).write_text('keep')
+        budget={'used':1};Path(self.args.output).write_text('keep', encoding='utf-8')
         with self.assertRaises(ValueError):self.execute(budget)
         self.assertEqual(budget['used'],2)
         self.assertEqual(len(self.calls()),1)
-        self.assertEqual(Path(self.args.output).read_text(),'keep')
+        self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'),'keep')
 
     def test_oversized_task_preflight_and_invalid_inputs(self):
-        self.prompt.write_text('x'*15000)
+        self.prompt.write_text('x'*15000, encoding='utf-8')
         self.args.max_prompt_chars=4000
         with self.assertRaises(ValueError):self.execute()
         self.assertFalse(self.calls())
-        self.prompt.write_text('task');self.raw.write_text('')
+        self.prompt.write_text('task', encoding='utf-8');self.raw.write_text('', encoding='utf-8')
         with self.assertRaises(ValueError):self.execute()
-        self.raw.write_text('x');self.args.chunk_chars=0
+        self.raw.write_text('x', encoding='utf-8');self.args.chunk_chars=0
         with self.assertRaises(ValueError):self.execute()
 
     def test_six_task_lesson_with_derived_inputs(self):
@@ -179,27 +184,27 @@ class ChunkTests(unittest.TestCase):
         self.assertTrue(any(c['payload'].get('source_kind')=='derived' for c in self.calls()))
         self.assertEqual(raw_before,{p.name:p.read_bytes() for p in (lesson/'raw').glob('*.md')})
         for _,output,_ in run_lesson1.TASKS.values():self.assertTrue((lesson/output).stat().st_size)
-        manifests=[json.loads(p.read_text()) for p in (lesson/'runs').glob('*/manifest.json')]
+        manifests=[json.loads(p.read_text(encoding='utf-8')) for p in (lesson/'runs').glob('*/manifest.json')]
         self.assertEqual(max(m['calls_used_total'] for m in manifests),len(self.calls()))
 
     def test_singleton_cannot_fit_without_silent_truncation(self):
         # One large exact quote fits map, but quote plus explanation/provenance
         # cannot fit final. No reducer may drop the only record silently.
-        self.raw.write_text('한' * 3900)
+        self.raw.write_text('한' * 3900, encoding='utf-8')
         self.args.chunk_chars = 4000
         self.args.max_prompt_chars = 5000
         self.config_set(quote_chars=3900)
-        Path(self.args.output).write_text('keep')
+        Path(self.args.output).write_text('keep', encoding='utf-8')
         with self.assertRaises(ValueError):self.execute()
-        self.assertEqual(Path(self.args.output).read_text(),'keep')
+        self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'),'keep')
         self.assertFalse(any(c['stage']=='final' for c in self.calls()))
 
     def test_malformed_csv_records_error_and_preserves_result(self):
         self.args.output=str(self.root/'out.csv')
-        Path(self.args.output).write_text('keep')
+        Path(self.args.output).write_text('keep', encoding='utf-8')
         self.config_set(badcsv=True)
         with self.assertRaises(ValueError):self.execute()
-        self.assertEqual(Path(self.args.output).read_text(),'keep')
+        self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'),'keep')
         self.assertEqual(self.manifests()[0]['status'],'error')
 
     def test_final_format_validation(self):

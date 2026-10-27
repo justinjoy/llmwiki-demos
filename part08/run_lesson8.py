@@ -21,7 +21,7 @@ def prepare():
         from lab import check_assertions
         data=read_json(previous);check_assertions(data['assertions'],'S1b')
     save(ROOT,'S1b_input.json',data)
-    result=engine(ROOT,data,(ROOT/'model.dl').read_text(),(ROOT/'rules.dl').read_text(),output='S1b_result.json')
+    result=engine(ROOT,data,(ROOT/'model.dl').read_text(encoding='utf-8'),(ROOT/'rules.dl').read_text(encoding='utf-8'),output='S1b_result.json')
     evidence_path=ROOT.parent/'part06/evidence_bundle.json'
     if not evidence_path.exists():raise ValueError('먼저 part06/run_lesson6.py --task evidence를 실행하세요.')
     bundle=check_evidence(evidence_path,ROOT/'raw')
@@ -37,17 +37,17 @@ def finish_wiki(before):
     for rel,label,target in [('wiki/services/pay.md','ledger 영향 분석','../analysis/ledger-impact-S1b.md'),
                              ('wiki/services/order.md','ledger 영향 분석','../analysis/ledger-impact-S1b.md'),
                              ('wiki/index.md','ledger 영향 분석','analysis/ledger-impact-S1b.md')]:
-        text=(ROOT/rel).read_text()
+        text=(ROOT/rel).read_text(encoding='utf-8')
         text=text.replace('TODO: 분석 페이지 작성 후 연결합니다.','분석 페이지는 S1b 기준의 검토 대기 초안입니다.')
         if target not in text:save(ROOT,rel,text+f'\n- [{label}]({target}) — S1b / 검토 대기\n')
-        elif text != (ROOT/rel).read_text():save(ROOT,rel,text)
+        elif text != (ROOT/rel).read_text(encoding='utf-8'):save(ROOT,rel,text)
     stamp=datetime.now().astimezone().isoformat(timespec='seconds')
-    log=(ROOT/'wiki/log.md').read_text()
+    log=(ROOT/'wiki/log.md').read_text(encoding='utf-8')
     save(ROOT,'wiki/log.md',log+f'\n## {stamp} · S1b 분석 초안\n\n생성: LLM CLI와 실행 스크립트. 상태: 사람 검토 대기. candidate-v1 결과·원문 근거로 분석 페이지와 서비스·index 링크를 갱신했습니다. 실제 검토자·검토 일자는 사람이 확인 후 기록합니다. 원문 파일은 보존했습니다.\n')
     diff=[]
     for path in sorted((ROOT/'wiki').rglob('*.md')):
         rel=path.relative_to(ROOT).as_posix()
-        diff.extend(difflib.unified_diff(before.get(rel,'').splitlines(True),path.read_text().splitlines(True),fromfile='before/'+rel,tofile='after/'+rel))
+        diff.extend(difflib.unified_diff(before.get(rel,'').splitlines(True),path.read_text(encoding='utf-8').splitlines(True),fromfile='before/'+rel,tofile='after/'+rel))
     save(ROOT,'change.diff',''.join(diff))
     errors=check(ROOT/'wiki')
     if errors:raise ValueError('위키 링크 검사 실패:\n'+'\n'.join(errors))
@@ -62,7 +62,7 @@ def main():
     base=[ROOT/'S1b_result.json',ROOT/'evidence_bundle.json',*sorted((ROOT/'raw').glob('*.md'))]
     for task in tasks:
         prompt,out,extra=TASKS[task]
-        before={p.relative_to(ROOT).as_posix():p.read_text() for p in (ROOT/'wiki').rglob('*.md')} if task=='wiki' else {}
+        before={p.relative_to(ROOT).as_posix():p.read_text(encoding='utf-8') for p in (ROOT/'wiki').rglob('*.md')} if task=='wiki' else {}
         progress=partial(print,flush=True) if task=='answer' else None
         if progress:
             progress('[answer 시작] 질의 결과의 후보·사실 경로를 원문과 대조하고, 문서에서 영향·조치 근거를 찾아 답변을 작성합니다.')

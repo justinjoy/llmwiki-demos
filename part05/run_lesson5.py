@@ -15,7 +15,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--task',choices=['reason','compare','delta','all'],default='all')
     a=p.parse_args()
-    model=(ROOT/'model.dl').read_text();rules=(ROOT/'rules.dl').read_text()
+    model=(ROOT/'model.dl').read_text(encoding='utf-8');rules=(ROOT/'rules.dl').read_text(encoding='utf-8')
     names=['S1'] if a.task=='reason' else ['S1','S2','S3'] if a.task in ['compare','all'] else []
     comparisons=[]
     for name in names:

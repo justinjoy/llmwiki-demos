@@ -32,7 +32,7 @@ def save(root, name, value):
         log = Path(root) / 'runs' / datetime.now().strftime('files-%Y%m%d-%H%M%S-%f')
         log.mkdir(parents=True)
         shutil.copy2(path, log / ('previous-' + path.name))
-        (log/'change.json').write_text(json.dumps({'output':str(path),'kind':'file_update'},ensure_ascii=False))
+        (log/'change.json').write_text(json.dumps({'output':str(path),'kind':'file_update'},ensure_ascii=False), encoding='utf-8')
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix='.write-')
     try:
         with os.fdopen(fd,'w',encoding='utf-8') as f: f.write(text)
@@ -121,7 +121,7 @@ def engine(root, data, model, rules='', output='result.json'):
     try:
         result=evaluate(model,facts_text(data),rules)
     except (OSError,ValueError,RuntimeError,subprocess.TimeoutExpired) as exc:
-        (log/'run.json').write_text(json.dumps({'status':'error','error':str(exc)},ensure_ascii=False,indent=2))
+        (log/'run.json').write_text(json.dumps({'status':'error','error':str(exc)},ensure_ascii=False,indent=2), encoding='utf-8')
         raise
     result.update(snapshot_id=data['snapshot_id'],snapshot_kind=data['snapshot_kind'],rule_id=data['rule_id'],
                   input_kind=data.get('input_kind','최종 교육자료의 승인 예시 체크포인트'),

@@ -35,11 +35,11 @@ def main():
     lesson3=importlib.util.module_from_spec(spec);spec.loader.exec_module(lesson3)
     for task in lesson3.TASKS:lesson3.validate_output(task)
     ok('3교시 실제 LLM 출력 구조·인용',True)
-    approved=[json.loads(l) for l in (ROOT/'part03/example_output/approved.jsonl').read_text().splitlines()]
+    approved=[json.loads(l) for l in (ROOT/'part03/example_output/approved.jsonl').read_text(encoding='utf-8').splitlines()]
     check_assertions(approved)
     ok('3교시 예시 내보내기 3/1/5',len(approved)==3 and len(read_json(ROOT/'part03/example_output/held.json'))==1 and len(read_json(ROOT/'part03/example_output/rejected.json'))==5)
-    ok('3교시 학습자 자동 승인 없음',(ROOT/'part03/approved.jsonl').read_text()=='')
-    model=(ROOT/'part04/model.dl').read_text();rules=(ROOT/'part05/rules.dl').read_text()
+    ok('3교시 학습자 자동 승인 없음',(ROOT/'part03/approved.jsonl').read_text(encoding='utf-8')=='')
+    model=(ROOT/'part04/model.dl').read_text(encoding='utf-8');rules=(ROOT/'part05/rules.dl').read_text(encoding='utf-8')
     counts={'S1':(3,6,3,3),'S2':(4,6,3,3),'S3':(3,5,2,1),'S1b':(4,9,4,3)}
     for name,expected in counts.items():
         data=snapshot(name);rel=evaluate(model,facts_text(data),rules)['relations']
@@ -53,7 +53,7 @@ def main():
     ok('4교시 추가 질의',extended['order_doc']==[['ADR-07:v1']] and extended['shop_dep']==[['order']])
     ok('4교시 열 수 오류 검출',read_json(p4/'invalid_result.json')['status']=='expected_error')
     ok('4교시 방향 오류는 문법상 성공',read_json(p4/'direction_result.json')['status']=='success' and ['pay','order'] in read_json(p4/'direction_result.json')['relations']['direct'])
-    delta=(ROOT/'part05/delta_actual.txt').read_text().splitlines()
+    delta=(ROOT/'part05/delta_actual.txt').read_text(encoding='utf-8').splitlines()
     ok('PyreWire 동일 세션 +2/0/-2 실제 출력',sum(s.startswith('+ mutual') for s in delta)==2 and sum(s.startswith('- mutual') for s in delta)==2 and read_json(ROOT/'part05/delta_run.json')['status']=='success' and read_json(ROOT/'part05/delta_run.json')['steps'][1]['events']==[])
     for n,sid in [(6,'S1'),(8,'S1b')]:
         check_evidence(ROOT/f'part{n:02}/evidence_bundle.json',ROOT/f'part{n:02}/raw',sid)
@@ -103,12 +103,12 @@ def main():
             row=read_json(p)
             if row.get('status')=='success' and row.get('cli')=='agy':successes.add((n,Path(row['output']).name))
     ok('LLM 13개 단계의 실제 성공 기록',len(successes)>=13)
-    answer=(ROOT/'part08/final_answer.md').read_text();wiki=(ROOT/'part08/wiki/analysis/ledger-impact-S1b.md').read_text()
+    answer=(ROOT/'part08/final_answer.md').read_text(encoding='utf-8');wiki=(ROOT/'part08/wiki/analysis/ledger-impact-S1b.md').read_text(encoding='utf-8')
     ok('최종 답변의 기준·조건·미확인',all(s in answer for s in ['S1b','candidate-v1','notify','25분','42분','5분','미확인']))
     ok('위키는 사람 검토 대기',all(s in wiki for s in ['검토 대기','F04','F02','F03']))
-    ok('실제 위키 변경 diff',(ROOT/'part08/change.diff').read_text().startswith('--- before/wiki/'))
+    ok('실제 위키 변경 diff',(ROOT/'part08/change.diff').read_text(encoding='utf-8').startswith('--- before/wiki/'))
     report={'status':'success','checks':len(passed),'pyrewire_version':installed_version,'llm_completed_outputs':len(successes),'passed':passed}
-    (ROOT/'verification.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+    (ROOT/'verification.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n', encoding='utf-8')
     print(f'PASS: {len(passed)} checks; PyreWire {installed_version} 4 snapshots; LLM {len(successes)} completed outputs; sources, quotes, links, review boundaries.')
 
 if __name__=='__main__':main()
