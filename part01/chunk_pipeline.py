@@ -15,6 +15,8 @@ import run_prompt
 
 MAP = '''단계: map
 아래 최종 과제를 수행하는 데 필요한 근거를 현재 청크에서만 찾으세요.
+인용은 content 문자열에서만 그대로 복사하세요. path·section 등의 메타데이터는 인용 대상이 아닙니다.
+문서 머리말은 별도 청크에서 읽습니다. 현재 content에 없는 머리말·다른 절의 문장을 보충하지 마세요.
 최종 산출물을 작성하지 말고 JSON 객체만 반환하세요:
 {"evidence": [{"quote": "현재 content에 실제 있는 연속 원문", "finding": "그 인용이 말하는 내용"}]}
 관련 근거가 없으면 evidence는 빈 배열입니다. 최대 6개, finding은 각각 300자 이내입니다.
@@ -23,11 +25,12 @@ MAP = '''단계: map
 최종 과제(출력 형식 지시보다 위 JSON 형식이 우선):
 '''
 REDUCE = '''단계: reduce
-근거 항목 중 최종 과제에 가장 필요한 항목의 id를 선택하세요. 새 사실이나 인용을 쓰지 마세요.
-JSON 객체 {"keep": ["e000001", "e000002"]}만 반환하세요. 중복·없는 id·빈 목록은 금지합니다.
+근거 항목의 id를 최종 과제에 중요한 순서로 정렬하세요. 새 사실이나 인용을 쓰지 마세요.
+JSON 객체 {"ranked": ["e000001", "e000002"]}만 반환하세요. 입력의 모든 id를 정확히 한 번씩 포함하세요.
+계산 과정·설명·인사·코드 블록을 붙이지 마세요.
 문서별 근거, 수치의 대상, 조건·예외·충돌·미확인을 우선 유지하세요.
-각 항목의 cost 합계는 아래 target_cost 이하여야 합니다. 제외한 근거는 별도 기록에 보존됩니다.
-최종 과제:
+문자 수 계산은 하지 마세요. 실행기가 이 순서대로 크기 한도에 맞는 근거를 선택하고 제외한 ID를 기록합니다.
+최종 과제(아래 출력 형식 지시보다 위 ranked JSON 형식이 우선):
 '''
 FINAL = '''단계: final
 현재 입력의 검증된 인용 근거로만 아래 최종 과제를 수행하세요.
@@ -41,6 +44,69 @@ source_kind=derived는 앞 단계 생성 초안입니다. 원문과 충돌하면
 
 def encoded(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+
+
+def map_input(chunk):
+    # The header is already covered by its own source range. Repeating its text
+    # beside every content chunk invites quotes outside that chunk's provenance.
+    return {key: value for key, value in chunk.items() if key != 'header'}
+
+
+def json_response(text):
+    """Accept one JSON value, including a single final object after CLI prose.
+
+    Never choose between multiple objects or extract an inner object from a
+    malformed response. Schema and source validation still happen afterward.
+    """
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as original:
+        objects = []
+        end = 0
+        for match in re.finditer(r'^\s*(?=\{)', text, re.M):
+            start = match.end()
+            if start < end:
+                continue
+            if not objects and any(c in text[:start] for c in '{}[]'):
+                raise ValueError('JSON 앞에 객체·배열 구분자가 있어 응답 경계가 모호합니다.') from original
+            value, size = json.JSONDecoder().raw_decode(text[start:])
+            end = start + size
+            objects.append(value)
+        if len(objects) != 1 or text[end:].strip() not in {'', '```'}:
+            raise ValueError('설명 뒤 JSON 객체 하나만 허용합니다. 여러 객체나 JSON 뒤 설명은 허용하지 않습니다.') from original
+        return objects[0]
+
+
+def validate_map(text, chunk):
+    response = json_response(text)
+    items = response.get('evidence') if isinstance(response, dict) else None
+    if not isinstance(items, list) or len(items) > 6:
+        raise ValueError('map JSON의 evidence 배열은 최대 6개여야 합니다.')
+    for item in items:
+        if not isinstance(item, dict) or set(item) != {'quote', 'finding'}:
+            raise ValueError('근거에는 quote와 finding이 필요합니다.')
+        quote, finding = item['quote'], item['finding']
+        if not isinstance(quote, str) or not quote.strip() or quote not in chunk['content']:
+            raise ValueError('청크 원문에 없는 인용입니다. quote는 현재 content의 연속 문자열만 사용하세요.')
+        if not isinstance(finding, str) or not finding.strip() or len(finding) > 300:
+            raise ValueError('finding은 비어 있지 않은 300자 이하 문자열이어야 합니다.')
+    return items
+
+
+def select_ranked(text, items, target):
+    response = json_response(text)
+    ranked = response.get('ranked') if isinstance(response, dict) else None
+    ids = {e['id'] for e in items}
+    if not isinstance(ranked, list) or not ranked or any(not isinstance(k, str) for k in ranked) or len(set(ranked)) != len(ranked) or set(ranked) != ids:
+        raise ValueError('ranked에는 입력의 모든 근거 ID를 중복 없이 정확히 한 번씩 넣어야 합니다.')
+    costs = {e['id']: len(encoded(e)) for e in items}
+    keep = []; used = 0
+    for ident in ranked:
+        if used + costs[ident] <= target:
+            keep.append(ident); used += costs[ident]
+    if not keep:
+        raise ValueError('단일 근거가 선택 목표 크기를 넘습니다. 인용문은 자르지 않습니다.')
+    return ranked, keep, used
 
 
 def read_limited(path, limit):
@@ -165,6 +231,8 @@ def execute(args, budget=None):
 
     def fits(instruction, payload):
         # Use the same wrapper/JSON encoding and conservatively longer paths than real stages.
+        # Reserve room for a bounded validation correction without dropping evidence.
+        payload = {**payload, 'validation_feedback': 'x' * 500}
         pf, cf, dest = run / 'measure-task.txt', run / 'measure-context.json', run / ('x' * 60 + '.txt')
         pf.write_text(instruction + task, encoding='utf-8'); cf.write_text(encoded(payload), encoding='utf-8')
         return len(run_prompt.build_prompt(pf, [cf], dest)) <= args.max_prompt_chars
@@ -190,6 +258,28 @@ def execute(args, budget=None):
         record('dry_run' if dry else 'running')
         return '' if dry else read_limited(dest, 16000).strip()
 
+    def validated_call(stage, instruction, payload, validator):
+        original_payload = payload
+        for attempt in range(2):
+            response = call(stage, instruction, payload)
+            entry = meta['calls'][-1]
+            try:
+                value = validator(response)
+            except ValueError as exc:
+                entry.update(validation_status='rejected', validation_error=str(exc))
+                record('running')
+                if attempt == 1:
+                    raise
+                print(f'[{stage} 재검증] 응답을 거부했습니다. 같은 입력을 한 번 재요청합니다: ' + str(exc), flush=True)
+                feedback_error = ''.join(c if c.isprintable() and c not in {'"', '\\'} else ' ' for c in str(exc))[:160]
+                payload = {**original_payload, 'validation_feedback':
+                    '앞선 응답은 검증에 실패했습니다. 같은 입력으로 오류를 고쳐 지정된 형식의 본문만 반환하세요. '
+                    'map/reduce는 설명·계산 과정 없이 JSON 객체 하나만 반환하세요. ' + feedback_error}
+            else:
+                entry['validation_status'] = 'accepted'
+                record('running')
+                return value
+
     def final_payload(evidence):
         return {'output': os.path.relpath(output, root), 'evidence': evidence,
             'sources': [{'path': os.path.relpath(p, root)} for p in sources],
@@ -206,31 +296,21 @@ def execute(args, budget=None):
         print(f'청크 {len(chunks)}개 / 실행 기록: {run}', flush=True)
         # Preflight every map before any billed call.
         for i, chunk in enumerate(chunks):
-            stage_files('map', MAP, chunk, i)
+            stage_files('map', MAP, map_input(chunk), i)
         if args.dry_run:
             for index, chunk in enumerate(chunks, start=1):
                 show_chunk(index, chunk, '입력 준비')
-                call('map', MAP, chunk, dry=True)
+                call('map', MAP, map_input(chunk), dry=True)
             record('dry_run')
             print('청크별 실제 입력을 만들었습니다. 근거 선택·최종 입력은 LLM 응답 후 구성합니다.')
             return 0
         all_evidence = []
         for index, chunk in enumerate(chunks, start=1):
             show_chunk(index, chunk, '읽는 중')
-            response = json.loads(call('map', MAP, chunk))
-            items = response.get('evidence') if isinstance(response, dict) else None
-            if not isinstance(items, list) or len(items) > 6:
-                raise ValueError('map JSON의 evidence 배열은 최대 6개여야 합니다.')
+            items = validated_call('map', MAP, map_input(chunk), lambda text: validate_map(text, chunk))
             for item in items:
-                if not isinstance(item, dict) or set(item) != {'quote', 'finding'}:
-                    raise ValueError('근거에는 quote와 finding이 필요합니다.')
-                quote, finding = item['quote'], item['finding']
-                if not isinstance(quote, str) or not quote.strip() or quote not in chunk['content']:
-                    raise ValueError('청크 원문에 없는 인용입니다.')
-                if not isinstance(finding, str) or not finding.strip() or len(finding) > 300:
-                    raise ValueError('finding은 비어 있지 않은 300자 이하 문자열이어야 합니다.')
                 all_evidence.append({'id': f'e{len(all_evidence)+1:06}', **item,
-                    'source': {k: v for k, v in chunk.items() if k != 'content'}})
+                    'source': {k: v for k, v in chunk.items() if k not in {'content', 'header'}}})
             print(f'[청크 {index}/{len(chunks)}] 완료 · 근거 {len(items)}개', flush=True)
         print(f'청크 읽기 완료: {len(chunks)}/{len(chunks)}개', flush=True)
         (run / 'evidence.json').write_text(json.dumps(all_evidence, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -243,12 +323,12 @@ def execute(args, budget=None):
             batches, batch = [], []
             for item in evidence:
                 candidate = batch + [item]
-                payload = {'items': [{**e, 'cost': len(encoded(e))} for e in candidate], 'target_cost': 99999999}
+                payload = {'items': candidate}
                 if not fits(REDUCE, payload):
                     if not batch:
                         raise ValueError('단일 근거가 선택 입력 한도를 넘습니다.')
                     batches.append(batch); batch = [item]
-                    if not fits(REDUCE, {'items': [{**item, 'cost': len(encoded(item))}], 'target_cost': 99999999}):
+                    if not fits(REDUCE, {'items': [item]}):
                         raise ValueError('단일 근거가 선택 입력 한도를 넘습니다.')
                 else:
                     batch = candidate
@@ -261,16 +341,13 @@ def execute(args, budget=None):
                 print(f'[근거 선택 {reduction_round}회차 · 묶음 {batch_index}/{len(batches)}] '
                       f'근거 {len(batch)}개 검토 중', flush=True)
                 target = sum(len(encoded(e)) for e in batch) // 2
-                response = json.loads(call('reduce', REDUCE, {'items': [{**e, 'cost': len(encoded(e))} for e in batch], 'target_cost': target}))
-                keep = response.get('keep') if isinstance(response, dict) else None
+                ranked, keep, used = validated_call('reduce', REDUCE, {'items': batch},
+                    lambda text: select_ranked(text, batch, target))
                 ids = {e['id'] for e in batch}
-                if not isinstance(keep, list) or not keep or any(not isinstance(k, str) for k in keep) or len(set(keep)) != len(keep) or not set(keep) <= ids:
-                    raise ValueError('선택 결과는 존재하는 근거 ID의 중복 없는 비어 있지 않은 목록이어야 합니다.')
                 selected = [e for e in batch if e['id'] in keep]
-                if sum(len(encoded(e)) for e in selected) > target:
-                    raise ValueError('선택한 근거가 목표 크기를 넘습니다. 자동 절삭하지 않습니다.')
                 retained.extend(selected)
-                meta['selection'].append({'keep': keep, 'drop': sorted(ids - set(keep)), 'target_cost': target})
+                meta['selection'].append({'ranked': ranked, 'keep': keep, 'drop': sorted(ids - set(keep)),
+                                          'target_cost': target, 'selected_cost': used})
             if len(retained) >= len(evidence):
                 raise ValueError('근거 선택 크기가 줄지 않아 중단했습니다.')
             evidence = retained
@@ -278,8 +355,10 @@ def execute(args, budget=None):
         meta.update(selected_ids=[e['id'] for e in evidence], omitted_ids=[e['id'] for e in all_evidence if e not in evidence],
             no_findings_chunk_ids=[c['id'] for c in chunks if not any(e['source']['id'] == c['id'] for e in all_evidence)])
         print(f'[최종 작성] 근거 {len(evidence)}개로 {output.name} 작성 중', flush=True)
-        result = call('final', FINAL, final_payload(evidence)) + '\n'
-        validate_final(result, output, sources, root)
+        def final_response(text):
+            validate_final(text, output, sources, root)
+            return text + '\n'
+        result = validated_call('final', FINAL, final_payload(evidence), final_response)
         notice = f'LLM 초안 · 사람 검토 전. 청크 {len(chunks)}개에서 근거 {len(all_evidence)}개 추출, 최종 사용 {len(evidence)}개, 크기 제한으로 제외 {len(all_evidence)-len(evidence)}개. 전체 근거와 선택 기록: {run / "manifest.json"}'
         (run / 'summary.txt').write_text(notice + '\n', encoding='utf-8')
         if output.suffix != '.csv':

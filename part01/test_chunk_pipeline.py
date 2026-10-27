@@ -28,16 +28,16 @@ if stage=='map':
     if config.get('malformed'):print('not json');sys.exit()
     quote=x['content'].strip()[:config.get('quote_chars',160)]
     if config.get('badquote'):quote='invented evidence'
+    if config.get('repair_quote') and 'validation_feedback' not in x:quote='invented evidence'
     count=config.get('count',1)
     print(json.dumps({'evidence':[{'quote':quote,'finding':quote[:300]} for _ in range(count)]},ensure_ascii=False))
 elif stage=='reduce':
+    if config.get('repair_reduce') and 'validation_feedback' not in x:print(json.dumps({'ranked':['missing']}));sys.exit()
     bad=config.get('badkeep')
-    if bad: print(json.dumps({'keep':{'empty':[],'unknown':['fake'],'duplicate':[x['items'][0]['id']]*2,'large':[v['id'] for v in x['items']]}[bad]}));sys.exit()
-    keep=[];cost=0
-    for e in sorted(x['items'],key=lambda e:e['cost']):
-        if cost+e['cost']<=x['target_cost']:keep.append(e['id']);cost+=e['cost']
-    print(json.dumps({'keep':keep}))
+    if bad: print(json.dumps({'ranked':{'empty':[],'unknown':['fake'],'duplicate':[x['items'][0]['id']]*2,'missing':[v['id'] for v in x['items']][1:]}[bad]}));sys.exit()
+    print(json.dumps({'ranked':[e['id'] for e in x['items']]}))
 else:
+    if config.get('repair_final') and 'validation_feedback' not in x:print('# 초안\n[없는 파일](missing.md)');sys.exit()
     if config.get('badcsv'):print('질문,위키 경로,원문 위치,답,남은 확인\n"unterminated');sys.exit()
     if config.get('badfinal'):print('# 잘못된 결과\n[없는 파일](missing.md)');sys.exit()
     if x['output'].endswith('.csv'):
@@ -107,6 +107,91 @@ class ChunkTests(unittest.TestCase):
         self.assertIn('사람 검토 전', Path(self.args.output).read_text(encoding='utf-8'))
         self.assertEqual(self.manifests()[0]['status'], 'success')
 
+    def test_header_is_read_in_its_own_range_not_repeated_as_map_context(self):
+        text = '# 문서\n문서 번호: DOC v1\n담당: 원문 담당 팀\n\n## 본문\n직접 호출 근거.\n'
+        self.raw.write_text(text, encoding='utf-8')
+        self.assertEqual(self.execute(), 0)
+        maps = [c['payload'] for c in self.calls() if c['stage'] == 'map']
+        self.assertEqual(''.join(c['content'] for c in maps), text)
+        self.assertTrue(all('header' not in c for c in maps))
+        self.assertIn('담당: 원문 담당 팀', maps[0]['content'])
+        self.assertNotIn('담당: 원문 담당 팀', maps[1]['content'])
+        # Reproduce the live failure: a real header is not evidence for a body range.
+        invalid = json.dumps({'evidence': [{'quote': '담당: 원문 담당 팀', 'finding': '담당 확인'}]})
+        with self.assertRaisesRegex(ValueError, '청크 원문에 없는 인용'):
+            pipeline.validate_map(invalid, maps[1])
+
+    def test_single_json_object_after_cli_prose_without_ambiguous_extraction(self):
+        value = {'evidence': [{'quote': '본문', 'finding': '설명'}]}
+        body = json.dumps(value, ensure_ascii=False, indent=2)
+        for text in [body, '설명문\n' + body, '설명문\n```json\n' + body + '\n```']:
+            self.assertEqual(pipeline.json_response(text), value)
+        for text in ['설명\n{}\n{}', '설명\n{}\n추가 설명', '설명\n{broken\n{}', '설명만']:
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                pipeline.json_response(text)
+        for prefix in ['설명 {"evidence": []}\n', '설명\n[\n', '설명 {"outer":\n',
+                       '설명 [안내]\n']:
+            with self.subTest(prefix=prefix), self.assertRaisesRegex(ValueError, '응답 경계가 모호'):
+                pipeline.validate_map(prefix + body, {'content': '본문'})
+        with self.assertRaisesRegex(ValueError, '청크 원문에 없는 인용'):
+            pipeline.validate_map('설명문\n' + body, {'content': '다른 문장'})
+
+    def test_ranked_selection_computes_exact_budget_without_truncating_quotes(self):
+        items = [{'id': 'large', 'quote': '긴 원문' * 80}, {'id': 'small', 'quote': '짧은 원문'},
+                 {'id': 'medium', 'quote': '중간 원문' * 4}]
+        original = json.dumps(items, ensure_ascii=False)
+        target = sum(len(pipeline.encoded(e)) for e in items[1:])
+        ranked, keep, used = pipeline.select_ranked(json.dumps({'ranked': ['large', 'medium', 'small']}), items, target)
+        self.assertEqual(keep, ['medium', 'small']); self.assertEqual(used, target)
+        self.assertEqual(ranked, ['large', 'medium', 'small'])
+        self.assertEqual(json.dumps(items, ensure_ascii=False), original)
+
+    def test_invalid_map_is_repaired_once_and_only_valid_evidence_is_used(self):
+        self.raw.write_text('# 문서\n\n## 절\n검증할 본문.\n', encoding='utf-8')
+        self.config_set(repair_quote=True)
+        budget = {'used': 0}
+        self.assertEqual(self.execute(budget), 0)
+        calls = self.calls()
+        maps = [c for c in calls if c['stage'] == 'map']
+        self.assertEqual(len(maps), 4)
+        self.assertEqual(budget['used'], 5)
+        for original, retry in zip(maps[::2], maps[1::2]):
+            self.assertEqual(original['payload']['content'], retry['payload']['content'])
+            self.assertIn('validation_feedback', retry['payload'])
+        manifest = self.manifests()[0]
+        self.assertEqual([c['validation_status'] for c in manifest['calls'] if c['stage'] == 'map'],
+                         ['rejected', 'accepted', 'rejected', 'accepted'])
+        self.assertTrue(all(e['quote'] != 'invented evidence' for e in calls[-1]['payload']['evidence']))
+
+    def test_map_repairs_are_bounded_by_attempts_and_shared_call_budget(self):
+        self.config_set(badquote=True)
+        Path(self.args.output).write_text('keep', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, '청크 원문에 없는 인용'):
+            self.execute()
+        self.assertEqual(len(self.calls()), 2)
+        self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'), 'keep')
+        self.fake.with_suffix('.jsonl').unlink()
+        self.args.max_calls = 1
+        budget = {'used': 0}
+        with self.assertRaisesRegex(ValueError, '호출 상한'):
+            self.execute(budget)
+        self.assertEqual(len(self.calls()), 1)
+        self.assertEqual(budget['used'], 1)
+        self.assertEqual(Path(self.args.output).read_text(encoding='utf-8'), 'keep')
+
+    def test_selection_and_final_repairs_keep_strict_validation(self):
+        self.raw.write_text('# 문서\n' + ''.join('## 절 '+str(i)+'\n'+'근거 본문.\n'*12 for i in range(12)), encoding='utf-8')
+        self.args.max_prompt_chars = 6000
+        self.config_set(repair_reduce=True, repair_final=True)
+        self.assertEqual(self.execute(), 0)
+        calls = self.calls()
+        self.assertTrue(any(c['stage'] == 'reduce' and 'validation_feedback' in c['payload'] for c in calls))
+        self.assertIn('validation_feedback', calls[-1]['payload'])
+        self.assertNotIn('missing.md', Path(self.args.output).read_text(encoding='utf-8'))
+        rejected = [c for c in self.manifests()[0]['calls'] if c.get('validation_status') == 'rejected']
+        self.assertTrue(any(c['stage'] == 'reduce' for c in rejected))
+        self.assertTrue(any(c['stage'] == 'final' for c in rejected))
+
     def test_multiple_reduction_rounds_are_bounded_and_audited(self):
         self.raw.write_text('# 문서\n문서 번호: D v1\n\n' + ''.join('## 절 '+str(i)+'\n'+'가나다 문맥.\n'*12 for i in range(24)), encoding='utf-8')
         self.config_set(count=2)
@@ -138,7 +223,7 @@ class ChunkTests(unittest.TestCase):
     def test_invalid_reduce_selections_and_final_failure_after_reduce(self):
         self.raw.write_text('# 文\n' + ''.join('## 절 '+str(i)+'\n'+'long evidence 한글.\n'*12 for i in range(12)), encoding='utf-8')
         self.args.max_prompt_chars=6000
-        for config in [{'badkeep':x} for x in ['empty','unknown','duplicate','large']] + [{'fail':'final'}]:
+        for config in [{'badkeep':x} for x in ['empty','unknown','duplicate','missing']] + [{'fail':'final'}]:
             with self.subTest(config=config):
                 Path(self.args.output).write_text('keep', encoding='utf-8')
                 self.config.write_text(json.dumps(config), encoding='utf-8')
