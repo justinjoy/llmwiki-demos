@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded document chunks → quoted evidence → selection → final draft (Python 3.9+)."""
+"""One to three source bundles → verified evidence → final draft (Python 3.9+)."""
 import argparse
 import csv
 import hashlib
@@ -14,23 +14,15 @@ import tempfile
 import run_prompt
 
 MAP = '''단계: map
-아래 최종 과제를 수행하는 데 필요한 근거를 현재 청크에서만 찾으세요.
-인용은 content 문자열에서만 그대로 복사하세요. path·section 등의 메타데이터는 인용 대상이 아닙니다.
-문서 머리말은 별도 청크에서 읽습니다. 현재 content에 없는 머리말·다른 절의 문장을 보충하지 마세요.
+아래 최종 과제를 수행하는 데 필요한 근거를 현재 청크의 sources에서 찾으세요.
+각 근거에 출처 조각의 id를 source_id로 쓰고 그 조각의 content에서만 그대로 인용하세요.
+path·section 등의 메타데이터는 인용 대상이 아닙니다. 다른 조각의 문장을 섞거나 보충하지 마세요.
 최종 산출물을 작성하지 말고 JSON 객체만 반환하세요:
-{"evidence": [{"quote": "현재 content에 실제 있는 연속 원문", "finding": "그 인용이 말하는 내용"}]}
+{"evidence": [{"source_id": "sources의 id", "quote": "그 content에 있는 연속 원문", "finding": "그 인용이 말하는 내용"}]}
 관련 근거가 없으면 evidence는 빈 배열입니다. 최대 6개, finding은 각각 300자 이내입니다.
 문서 번호·버전·절, 수치의 대상, 조치 범위와 승인 조건을 유지하세요.
 분할된 문장이 불완전하면 추측하지 마세요. derived 자료는 생성 초안이며 원문 사실로 승인하지 마세요.
 최종 과제(출력 형식 지시보다 위 JSON 형식이 우선):
-'''
-REDUCE = '''단계: reduce
-근거 항목의 id를 최종 과제에 중요한 순서로 정렬하세요. 새 사실이나 인용을 쓰지 마세요.
-JSON 객체 {"ranked": ["e000001", "e000002"]}만 반환하세요. 입력의 모든 id를 정확히 한 번씩 포함하세요.
-계산 과정·설명·인사·코드 블록을 붙이지 마세요.
-문서별 근거, 수치의 대상, 조건·예외·충돌·미확인을 우선 유지하세요.
-문자 수 계산은 하지 마세요. 실행기가 이 순서대로 크기 한도에 맞는 근거를 선택하고 제외한 ID를 기록합니다.
-최종 과제(아래 출력 형식 지시보다 위 ranked JSON 형식이 우선):
 '''
 FINAL = '''단계: final
 현재 입력의 검증된 인용 근거로만 아래 최종 과제를 수행하세요.
@@ -44,12 +36,6 @@ source_kind=derived는 앞 단계 생성 초안입니다. 원문과 충돌하면
 
 def encoded(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
-
-
-def map_input(chunk):
-    # The header is already covered by its own source range. Repeating its text
-    # beside every content chunk invites quotes outside that chunk's provenance.
-    return {key: value for key, value in chunk.items() if key != 'header'}
 
 
 def json_response(text):
@@ -82,31 +68,23 @@ def validate_map(text, chunk):
     items = response.get('evidence') if isinstance(response, dict) else None
     if not isinstance(items, list) or len(items) > 6:
         raise ValueError('map JSON의 evidence 배열은 최대 6개여야 합니다.')
+    sources = {s['id']: s for s in chunk['sources']}
+    validated = []
     for item in items:
-        if not isinstance(item, dict) or set(item) != {'quote', 'finding'}:
-            raise ValueError('근거에는 quote와 finding이 필요합니다.')
+        if not isinstance(item, dict) or set(item) != {'source_id', 'quote', 'finding'}:
+            raise ValueError('근거에는 source_id, quote, finding이 필요합니다.')
+        ident = item['source_id']
+        if not isinstance(ident, str) or ident not in sources:
+            raise ValueError('source_id는 현재 청크의 sources에 있는 id여야 합니다.')
+        source = sources[ident]
         quote, finding = item['quote'], item['finding']
-        if not isinstance(quote, str) or not quote.strip() or quote not in chunk['content']:
-            raise ValueError('청크 원문에 없는 인용입니다. quote는 현재 content의 연속 문자열만 사용하세요.')
+        if not isinstance(quote, str) or not quote.strip() or quote not in source['content']:
+            raise ValueError('지정한 출처 범위에 없는 인용입니다. 해당 source_id의 content에서 그대로 복사하세요.')
         if not isinstance(finding, str) or not finding.strip() or len(finding) > 300:
             raise ValueError('finding은 비어 있지 않은 300자 이하 문자열이어야 합니다.')
-    return items
-
-
-def select_ranked(text, items, target):
-    response = json_response(text)
-    ranked = response.get('ranked') if isinstance(response, dict) else None
-    ids = {e['id'] for e in items}
-    if not isinstance(ranked, list) or not ranked or any(not isinstance(k, str) for k in ranked) or len(set(ranked)) != len(ranked) or set(ranked) != ids:
-        raise ValueError('ranked에는 입력의 모든 근거 ID를 중복 없이 정확히 한 번씩 넣어야 합니다.')
-    costs = {e['id']: len(encoded(e)) for e in items}
-    keep = []; used = 0
-    for ident in ranked:
-        if used + costs[ident] <= target:
-            keep.append(ident); used += costs[ident]
-    if not keep:
-        raise ValueError('단일 근거가 선택 목표 크기를 넘습니다. 인용문은 자르지 않습니다.')
-    return ranked, keep, used
+        validated.append({'quote': quote, 'finding': finding,
+                          'source': {k: v for k, v in source.items() if k != 'content'}})
+    return validated
 
 
 def read_limited(path, limit):
@@ -117,43 +95,61 @@ def read_limited(path, limit):
     return data.decode('utf-8-sig')
 
 
-def split_source(path, root, limit, kind, text):
-    """Exact nonoverlapping character ranges; section/header are bounded context."""
+def source_document(path, root, kind, text):
     header_end = re.search(r'^##+\s', text, re.M)
     header = text[:header_end.start()] if header_end else ''
     if len(header) > 800:
         raise ValueError(f'문서 머리말이 800자를 넘습니다: {path}')
-    digest = hashlib.sha256(text.encode('utf-8')).hexdigest()
-    rel = os.path.relpath(path, root)
-    boundaries = [0] + [m.start() for m in re.finditer(r'^#{1,6}\s', text, re.M) if m.start()] + [len(text)]
+    headings = [(m.start(), m.group()) for m in re.finditer(r'^#{1,6}\s[^\n]*', text, re.M)]
+    if any(len(title) > 300 for _, title in headings):
+        raise ValueError(f'절 제목이 300자를 넘습니다: {path}')
+    return {'path': os.path.relpath(path, root), 'source_sha256': hashlib.sha256(text.encode('utf-8')).hexdigest(),
+            'source_kind': kind, 'text': text, 'headings': headings}
+
+
+def source_fragment(document, start, end):
+    text = document['text']
+    active = [title for offset, title in document['headings'] if offset <= start]
+    inside = [title for offset, title in document['headings'] if start < offset < end]
+    titles = active[-1:] + inside
+    section = titles[0] if len(titles) == 1 else (titles[0][:130] + ' … ' + titles[-1][:130] if titles else '')
+    key = f'{document["path"]}\0{document["source_sha256"]}\0{start}\0{end}'
+    return {**{k: document[k] for k in ('path', 'source_sha256', 'source_kind')},
+            'id': hashlib.sha256(key.encode()).hexdigest()[:20], 'start': start, 'end': end,
+            'line_start': text.count('\n', 0, start) + 1,
+            'line_end': text.count('\n', 0, max(start, end - 1)) + 1,
+            'section': section, 'content': text[start:end]}
+
+
+def bundle_sources(documents, count):
+    """Balanced task-wide ranges, preserving each file's exact identity/content."""
+    total = sum(len(d['text']) for d in documents)
+    count = min(count, total)
+    boundaries = [0]
+    joined = ''.join(d['text'] for d in documents)
+    for i in range(1, count):
+        ideal = total * i // count
+        cut = joined.rfind('\n', max(boundaries[-1] + 1, ideal - min(256, total // (count * 4))), ideal)
+        boundaries.append(cut + 1 if cut >= 0 else ideal)
+    if total:
+        boundaries.append(total)
     chunks = []
-    section = ''
-    for a, b in zip(boundaries, boundaries[1:]):
-        first = text[a:b].split('\n', 1)[0]
-        if first.startswith('#'):
-            section = first
-        if len(section) > 300:
-            raise ValueError(f'절 제목이 300자를 넘습니다: {path}')
-        start = a
-        while start < b:
-            end = min(start + limit, b)
-            if end < b:
-                cut = text.rfind('\n', start + limit // 2, end)
-                if cut >= 0:
-                    end = cut + 1
-            key = f'{rel}\0{digest}\0{start}\0{end}'
-            chunks.append({'id': hashlib.sha256(key.encode()).hexdigest()[:20],
-                'path': rel, 'source_sha256': digest, 'source_kind': kind,
-                'start': start, 'end': end, 'line_start': text.count('\n', 0, start) + 1,
-                'line_end': text.count('\n', 0, max(start, end - 1)) + 1,
-                'header': header, 'section': section, 'content': text[start:end]})
-            start = end
+    for index, (left, right) in enumerate(zip(boundaries, boundaries[1:]), start=1):
+        fragments = []
+        offset = 0
+        for document in documents:
+            length = len(document['text'])
+            start, end = max(0, left - offset), min(length, right - offset)
+            if start < end:
+                fragments.append(source_fragment(document, start, end))
+            offset += length
+        chunks.append({'id': f'chunk{index:03}', 'sources': fragments})
     return chunks
 
 
 def add_options(p):
-    p.add_argument('--chunk-chars', type=int, default=800, help='청크 본문 문자 수 (100~4000)')
-    p.add_argument('--max-prompt-chars', type=int, default=16000, help='공통 지침을 포함한 호출별 전체 문자 상한')
+    p.add_argument('--chunk-chars', type=int, default=4800, help='초기 청크 본문 목표 (100자 이상, 호출 수에 맞춰 자동 확대)')
+    p.add_argument('--max-prompt-chars', type=int, default=16000, help='전체 입력의 초기 목표 (필요한 실측 크기로 자동 확대)')
     p.add_argument('--max-calls', type=int, default=256, help='실행 전체의 LLM 호출 상한 (all도 공유)')
     return p
 
@@ -182,8 +178,8 @@ def validate_final(text, output, sources, root):
 
 
 def execute(args, budget=None):
-    if not 100 <= args.chunk_chars <= 4000 or not 4000 <= args.max_prompt_chars <= 64000 or args.max_calls < 1:
-        raise ValueError('chunk-chars는 100~4000, max-prompt-chars는 4000~64000, max-calls는 양수여야 합니다.')
+    if args.chunk_chars < 100 or not 4000 <= args.max_prompt_chars <= 64000 or args.max_calls < 1:
+        raise ValueError('chunk-chars는 100 이상, max-prompt-chars 초기 목표는 4000~64000, max-calls는 양수여야 합니다.')
     if args.timeout <= 0:
         raise ValueError('timeout은 양수여야 합니다.')
     budget = budget if budget is not None else {'used': 0}
@@ -198,25 +194,33 @@ def execute(args, budget=None):
     task = read_limited(prompt_path, 16000)
     if not task.strip():
         raise ValueError('빈 과제 지시문입니다.')
-    chunks = []
+    documents = []
     total = 0
     for path in sources:
         text = read_limited(path, 1024 * 1024 - total)
         total += len(text.encode('utf-8'))
         kind = 'derived' if path in [Path(p).resolve() for p in getattr(args, 'derived_context', [])] else 'raw'
-        chunks.extend(split_source(path, root, args.chunk_chars, kind, text))
-    if not chunks:
+        documents.append(source_document(path, root, kind, text))
+    if not any(d['text'] for d in documents):
         raise ValueError('읽을 청크가 없습니다.')
     logroot = Path(args.log_dir).resolve()
     logroot.mkdir(parents=True, exist_ok=True)
     run = Path(tempfile.mkdtemp(prefix='chunk-', dir=logroot))
     meta = {'status': 'prepared', 'output': str(output), 'chunk_chars': args.chunk_chars,
         'max_prompt_chars': args.max_prompt_chars, 'max_calls': args.max_calls,
-        'chunks': chunks, 'calls': [], 'selection': [], 'final': 'deferred_until_map_results'}
+        'requested_chunk_chars': args.chunk_chars, 'requested_prompt_chars': args.max_prompt_chars,
+        'effective_prompt_chars': args.max_prompt_chars,
+        'chunks': [], 'calls': [], 'selection': [], 'final': 'deferred_until_map_results'}
 
     def record(status):
         meta.update(status=status, calls_used_total=budget['used'])
         (run / 'manifest.json').write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding='utf-8')
+
+    def grow_capacity(required):
+        if required > meta['effective_prompt_chars']:
+            print(f'[입력 크기 조정] {meta["effective_prompt_chars"]} → {required}자 (추가 분할·선택 호출 없음)', flush=True)
+            meta['effective_prompt_chars'] = required
+            meta['max_prompt_chars'] = required
 
     def stage_files(stage, instruction, payload, number):
         folder = run / f'{number:04}-{stage}'
@@ -225,21 +229,21 @@ def execute(args, budget=None):
         pf.write_text(instruction + task, encoding='utf-8')
         cf.write_text(encoded(payload), encoding='utf-8')
         actual = run_prompt.build_prompt(pf, [cf], dest)
-        if len(actual) > args.max_prompt_chars:
-            raise ValueError(f'{stage} 전체 입력 {len(actual)}자가 한도 {args.max_prompt_chars}자를 넘습니다.')
+        grow_capacity(len(actual))
         return folder, pf, cf, dest, actual
 
-    def fits(instruction, payload):
-        # Use the same wrapper/JSON encoding and conservatively longer paths than real stages.
-        # Reserve room for a bounded validation correction without dropping evidence.
+    def measure(instruction, payload):
+        # Reserve room for a bounded correction and conservatively longer paths.
         payload = {**payload, 'validation_feedback': 'x' * 500}
         pf, cf, dest = run / 'measure-task.txt', run / 'measure-context.json', run / ('x' * 60 + '.txt')
         pf.write_text(instruction + task, encoding='utf-8'); cf.write_text(encoded(payload), encoding='utf-8')
-        return len(run_prompt.build_prompt(pf, [cf], dest)) <= args.max_prompt_chars
+        return len(run_prompt.build_prompt(pf, [cf], dest))
 
-    def call(stage, instruction, payload, dry=False):
+    def call(stage, instruction, payload, dry=False, attempt=0):
         folder, pf, cf, dest, actual = stage_files(stage, instruction, payload, len(meta['calls']))
-        entry = {'stage': stage, 'directory': folder.name, 'prompt_chars': len(actual), 'status': 'prepared'}
+        entry = {'stage': stage, 'directory': folder.name, 'prompt_chars': len(actual),
+                 'effective_prompt_chars': meta['effective_prompt_chars'], 'attempt': attempt,
+                 'chunk_id': payload.get('id'), 'status': 'prepared'}
         meta['calls'].append(entry)
         record('running' if not dry else 'dry_run')
         if not dry and budget['used'] >= args.max_calls:
@@ -248,6 +252,7 @@ def execute(args, budget=None):
         params.prompt, params.context, params.output = str(pf), [str(cf)], str(dest)
         params.log_dir, params.overwrite, params.dry_run = str(folder / 'transport'), False, dry
         params.max_response_bytes = 16000
+        params.max_prompt_chars = meta['effective_prompt_chars']
         if not dry:
             budget['used'] += 1
         rc = run_prompt.execute(params)
@@ -261,7 +266,7 @@ def execute(args, budget=None):
     def validated_call(stage, instruction, payload, validator):
         original_payload = payload
         for attempt in range(2):
-            response = call(stage, instruction, payload)
+            response = call(stage, instruction, payload, attempt=attempt)
             entry = meta['calls'][-1]
             try:
                 value = validator(response)
@@ -274,7 +279,7 @@ def execute(args, budget=None):
                 feedback_error = ''.join(c if c.isprintable() and c not in {'"', '\\'} else ' ' for c in str(exc))[:160]
                 payload = {**original_payload, 'validation_feedback':
                     '앞선 응답은 검증에 실패했습니다. 같은 입력으로 오류를 고쳐 지정된 형식의 본문만 반환하세요. '
-                    'map/reduce는 설명·계산 과정 없이 JSON 객체 하나만 반환하세요. ' + feedback_error}
+                    'map은 설명 없이 JSON 객체 하나만, final은 지정된 문서 본문만 반환하세요. ' + feedback_error}
             else:
                 entry['validation_status'] = 'accepted'
                 record('running')
@@ -283,83 +288,58 @@ def execute(args, budget=None):
     def final_payload(evidence):
         return {'output': os.path.relpath(output, root), 'evidence': evidence,
             'sources': [{'path': os.path.relpath(p, root)} for p in sources],
-            'omitted_evidence_count': len(all_evidence) - len(evidence),
+            'omitted_evidence_count': 0,
             'source_count': len(sources),
             'selected_source_count': len({e['source']['path'] for e in evidence})}
 
     def show_chunk(index, chunk, action):
-        print(f'[청크 {index}/{len(chunks)}] {action}: '
-              f'{chunk["path"]} · {chunk["section"] or "제목 없음"} '
-              f'(원문 {chunk["line_start"]}~{chunk["line_end"]}행)', flush=True)
+        print(f'[청크 {index}/{len(chunks)}] {action}: 출처 조각 {len(chunk["sources"])}개', flush=True)
+        for source in chunk['sources']:
+            print(f'  {source["path"]} · {source["section"] or "제목 없음"} '
+                  f'(원문 {source["line_start"]}~{source["line_end"]}행)', flush=True)
 
     try:
-        print(f'청크 {len(chunks)}개 / 실행 기록: {run}', flush=True)
+        total_chars = sum(len(d['text']) for d in documents)
+        group_limit = min(3, max(1, (total_chars + args.chunk_chars - 1) // args.chunk_chars))
+        for count in range(1, group_limit + 1):
+            chunks = bundle_sources(documents, count)
+            required = max(measure(MAP, chunk) for chunk in chunks)
+            if required <= args.max_prompt_chars:
+                break
+        grow_capacity(required)
+        effective_chars = max(sum(len(s['content']) for s in c['sources']) for c in chunks)
+        meta.update(chunks=chunks, effective_chunk_chars=effective_chars, initial_map_groups=len(chunks))
+        print(f'청크 {len(chunks)}개 / 본문 목표 {args.chunk_chars}자 → 실제 최대 {effective_chars}자 / 실행 기록: {run}', flush=True)
         # Preflight every map before any billed call.
         for i, chunk in enumerate(chunks):
-            stage_files('map', MAP, map_input(chunk), i)
+            stage_files('map', MAP, chunk, i)
         if args.dry_run:
             for index, chunk in enumerate(chunks, start=1):
                 show_chunk(index, chunk, '입력 준비')
-                call('map', MAP, map_input(chunk), dry=True)
+                call('map', MAP, chunk, dry=True)
             record('dry_run')
-            print('청크별 실제 입력을 만들었습니다. 근거 선택·최종 입력은 LLM 응답 후 구성합니다.')
+            print('최대 3개 청크의 실제 입력을 만들었습니다. 최종 입력은 근거 응답 후 구성합니다.')
             return 0
         all_evidence = []
         for index, chunk in enumerate(chunks, start=1):
             show_chunk(index, chunk, '읽는 중')
-            items = validated_call('map', MAP, map_input(chunk), lambda text: validate_map(text, chunk))
+            items = validated_call('map', MAP, chunk, lambda text: validate_map(text, chunk))
             for item in items:
-                all_evidence.append({'id': f'e{len(all_evidence)+1:06}', **item,
-                    'source': {k: v for k, v in chunk.items() if k not in {'content', 'header'}}})
+                all_evidence.append({'id': f'e{len(all_evidence)+1:06}', **item})
             print(f'[청크 {index}/{len(chunks)}] 완료 · 근거 {len(items)}개', flush=True)
         print(f'청크 읽기 완료: {len(chunks)}/{len(chunks)}개', flush=True)
         (run / 'evidence.json').write_text(json.dumps(all_evidence, ensure_ascii=False, indent=2), encoding='utf-8')
         evidence = list(all_evidence)
-        reduction_round = 0
-        while not fits(FINAL, final_payload(evidence)):
-            reduction_round += 1
-            if len(evidence) < 2:
-                raise ValueError('단일 근거와 과제가 최종 입력 한도를 넘습니다.')
-            batches, batch = [], []
-            for item in evidence:
-                candidate = batch + [item]
-                payload = {'items': candidate}
-                if not fits(REDUCE, payload):
-                    if not batch:
-                        raise ValueError('단일 근거가 선택 입력 한도를 넘습니다.')
-                    batches.append(batch); batch = [item]
-                    if not fits(REDUCE, {'items': [item]}):
-                        raise ValueError('단일 근거가 선택 입력 한도를 넘습니다.')
-                else:
-                    batch = candidate
-            if batch:
-                batches.append(batch)
-            retained = []
-            for batch_index, batch in enumerate(batches, start=1):
-                if len(batch) == 1:
-                    retained.extend(batch); continue
-                print(f'[근거 선택 {reduction_round}회차 · 묶음 {batch_index}/{len(batches)}] '
-                      f'근거 {len(batch)}개 검토 중', flush=True)
-                target = sum(len(encoded(e)) for e in batch) // 2
-                ranked, keep, used = validated_call('reduce', REDUCE, {'items': batch},
-                    lambda text: select_ranked(text, batch, target))
-                ids = {e['id'] for e in batch}
-                selected = [e for e in batch if e['id'] in keep]
-                retained.extend(selected)
-                meta['selection'].append({'ranked': ranked, 'keep': keep, 'drop': sorted(ids - set(keep)),
-                                          'target_cost': target, 'selected_cost': used})
-            if len(retained) >= len(evidence):
-                raise ValueError('근거 선택 크기가 줄지 않아 중단했습니다.')
-            evidence = retained
-            record('running')
-        meta.update(selected_ids=[e['id'] for e in evidence], omitted_ids=[e['id'] for e in all_evidence if e not in evidence],
-            no_findings_chunk_ids=[c['id'] for c in chunks if not any(e['source']['id'] == c['id'] for e in all_evidence)])
+        grow_capacity(measure(FINAL, final_payload(evidence)))
+        meta.update(selected_ids=[e['id'] for e in evidence], omitted_ids=[],
+            no_findings_source_ids=[s['id'] for c in chunks for s in c['sources']
+                                   if not any(e['source']['id'] == s['id'] for e in all_evidence)])
         print(f'[최종 작성] 근거 {len(evidence)}개로 {output.name} 작성 중', flush=True)
         def final_response(text):
             validate_final(text, output, sources, root)
             return text + '\n'
         result = validated_call('final', FINAL, final_payload(evidence), final_response)
-        notice = f'LLM 초안 · 사람 검토 전. 청크 {len(chunks)}개에서 근거 {len(all_evidence)}개 추출, 최종 사용 {len(evidence)}개, 크기 제한으로 제외 {len(all_evidence)-len(evidence)}개. 전체 근거와 선택 기록: {run / "manifest.json"}'
+        notice = f'LLM 초안 · 사람 검토 전. 청크 {len(chunks)}개에서 근거 {len(all_evidence)}개 추출, 모두 최종 작성에 전달. 근거 추출은 전체 사실의 완전한 정리가 아닙니다. 실행 기록: {run / "manifest.json"}'
         (run / 'summary.txt').write_text(notice + '\n', encoding='utf-8')
         if output.suffix != '.csv':
             result += '\n> ' + notice + '\n'
