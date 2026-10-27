@@ -33,7 +33,7 @@ class Corpus:
                 self.docs[ident]={'doc_id':ident,'kind':kind,'status':status,'title':text.splitlines()[0].lstrip('# '),
                   'path':path.relative_to(self.root).as_posix(),'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
                   'text':text,'sections':sections}
-        self.aliases=json.loads((self.root/'ontology/aliases.json').read_text())
+        self.aliases=json.loads((self.root/'ontology/aliases.json').read_text(encoding='utf-8'))
 
     def catalog(self):
         return [{k:v for k,v in d.items() if k in ('doc_id','kind','title','status')} |

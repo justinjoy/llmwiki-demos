@@ -39,7 +39,7 @@ class Tests(unittest.TestCase):
     def test_raw_search_and_quotes(self):
         hit=self.corpus.search('타임아웃 대사','raw')['hits'][0]
         section=self.corpus.read(hit['doc_id'],hit['section'])[0]
-        self.assertIn(section['quote'],(ROOT/'data'/section['path']).read_text())
+        self.assertIn(section['quote'],(ROOT/'data'/section['path']).read_text(encoding='utf-8'))
         self.assertEqual(self.corpus.docs['ARCH-01:v2']['status'],'draft')
         self.assertEqual(self.corpus.search('zzzznothing')['status'],'empty')
     def test_no_arbitrary_files(self):
@@ -47,7 +47,7 @@ class Tests(unittest.TestCase):
     def test_pending_fact_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             p=Path(temp)/'data';shutil.copytree(ROOT/'data',p)
-            f=p/'snapshots/S1b.json';d=json.loads(f.read_text());d['assertions'][0]['review_status']='pending';f.write_text(json.dumps(d))
+            f=p/'snapshots/S1b.json';d=json.loads(f.read_text(encoding='utf-8'));d['assertions'][0]['review_status']='pending';f.write_text(json.dumps(d),encoding='utf-8')
             with self.assertRaises(ValueError):Graph(Corpus(p))
     def test_real_tools_and_history(self):
         model=ScriptedModel([{'type':'tools','calls':[{'tool':'read_document','arguments':{'doc_id':'ARCH-01:v1','section':'§3'}}]},
@@ -63,7 +63,7 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaises(RuntimeError):Assistant(ROOT/'data',temp,ScriptedModel([bad,bad,bad])).ask('질문')
             self.assertFalse(list(Path(temp).glob('*/answer.json')))
-            self.assertEqual(json.loads(next(Path(temp).glob('*/run.json')).read_text())['status'],'error')
+            self.assertEqual(json.loads(next(Path(temp).glob('*/run.json')).read_text(encoding='utf-8'))['status'],'error')
     def test_wiki_only_not_primary_proof(self):
         with self.assertRaises(ValueError):Assistant.validate_answer({'claims':[{'text':'주장','kind':'fact','citations':['E1']}],'unknowns':[]},{'E1':{'kind':'wiki'}})
     def test_unsupported_question_can_abstain(self):
@@ -74,7 +74,7 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaises(RuntimeError):Assistant(ROOT/'data',temp,ScriptedModel([illegal]*3)).ask('명령')
     def test_original_data_preserved(self):
-        manifest=json.loads((ROOT/'data/manifest.json').read_text())
+        manifest=json.loads((ROOT/'data/manifest.json').read_text(encoding='utf-8'))
         for name,sha in manifest['files'].items():self.assertEqual(hashlib.sha256((ROOT/'data'/name).read_bytes()).hexdigest(),sha,name)
 
 class HTTPTests(unittest.TestCase):
@@ -213,7 +213,7 @@ class CLISelectionTests(unittest.TestCase):
                 result=app.jobs[ident]['result'];self.assertEqual(result['cli'],cli)
                 folder=Path(temp)/result['run_id']
                 for filename in ['run.json','answer.json']:
-                    self.assertEqual(json.loads((folder/filename).read_text())['cli'],cli)
+                    self.assertEqual(json.loads((folder/filename).read_text(encoding='utf-8'))['cli'],cli)
 
     def test_model_failure_records_selected_cli_without_changing_default(self):
         from serve import App
@@ -224,7 +224,7 @@ class CLISelectionTests(unittest.TestCase):
             ident=app.submit('test','S1b',[],'claude');app.pool.shutdown(wait=True)
             job=app.jobs[ident];self.assertEqual(job['status'],'error');self.assertEqual(job['cli'],'claude')
             self.assertIn('synthetic login required',job['message'])
-            record=json.loads(next(Path(temp).glob('*/run.json')).read_text())
+            record=json.loads(next(Path(temp).glob('*/run.json')).read_text(encoding='utf-8'))
             self.assertEqual(record['cli'],'claude');self.assertEqual(record['status'],'error')
             self.assertIs(bot.model,default);self.assertEqual(default.states,[])
 

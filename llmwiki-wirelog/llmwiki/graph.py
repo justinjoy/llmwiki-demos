@@ -20,7 +20,7 @@ class Graph:
         self.corpus=corpus
         self.snapshots={}
         for name in ('S1','S1b','S2','S3'):
-            d=json.loads((corpus.root/'snapshots'/f'{name}.json').read_text())
+            d=json.loads((corpus.root/'snapshots'/f'{name}.json').read_text(encoding='utf-8'))
             if d['snapshot_id']!=name:raise ValueError('스냅샷 ID 불일치')
             seen=set()
             for f in d['assertions']:
